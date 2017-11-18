@@ -1,15 +1,12 @@
 if myHero.charName ~= "Ahri" then return end
 
---// requirements
 require "DamageLib"
 
---// spelldata
 local Q = { Range = 880, Delay = 0.25, Speed = 1700, Width = 100}
 local W = { Range = 700, Delay = 0.25}
 local E = { Range = 925, Delay = 0.25, Speed = 1600, Width = 100}
 local R = { Range = 425, Delay = 0}
 
---// needs
 local _EnemyHeroes
 local function GetEnemyHeroes()
 	if _EnemyHeroes then return _EnemyHeroes end
@@ -114,7 +111,6 @@ local HKITEM = {
 	[ITEM_7] = HK_ITEM_7,
 }
 
---// damages
 local function Qdmg(target)
     local level = myHero:GetSpellData(_Q).level
 	if Ready(_Q) then
