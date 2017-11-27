@@ -449,7 +449,7 @@ function Combo()
     local target = GetTarget(E.Range)
     if target == nil then return end
     if Ready(_R) and ValidTarget(target, R.Range) then
-        if Rdmg(target) > target.health and Illaoi.C.R:Value() or HeroesAround(myHero.pos, R.Range, 300 - myHero.team) > Illaoi.C.Rx:Value() then
+        if Rdmg(target) > target.health and Illaoi.C.R:Value() or HeroesAround(myHero.pos, R.Range, 300 - myHero.team) +1 > Illaoi.C.Rx:Value() then
 			EnableOrb(false)
 			Control.CastSpell(HK_R)
 			DelayAction(function() EnableOrb(true) end, 0.4)
