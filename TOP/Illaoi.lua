@@ -24,7 +24,7 @@ local function Ready(spell)
 	return myHero:GetSpellData(spell).currentCd == 0 and myHero:GetSpellData(spell).level > 0 and myHero:GetSpellData(spell).mana <= myHero.mana and Game.CanUseSpell(spell) == 0 
 end
 
-function ValidTarget(target, range)
+local function ValidTarget(target, range)
 	range = range and range or math.huge
 	return target ~= nil and target.valid and target.visible and not target.dead and target.distance <= range
 end
@@ -39,11 +39,11 @@ local function IsImmobileTarget(unit)
 	return false	
 end
 
-function PercentHP(target)
+local function PercentHP(target)
     return 100 * target.health / target.maxHealth
 end
 
-function PercentMP(target)
+local function PercentMP(target)
     return 100 * target.mana / target.maxMana
 end
 
@@ -79,7 +79,7 @@ local function GetMode()
 	end
 end
 
-function HeroesAround(pos, range, team)
+local function HeroesAround(pos, range, team)
 	local Count = 0
 	for i = 1, Game.HeroCount() do
 		local minion = Game.Hero(i)
@@ -90,7 +90,7 @@ function HeroesAround(pos, range, team)
 	return Count
 end
 
-function MinionsAround(pos, range, team)
+local function MinionsAround(pos, range, team)
 	local Count = 0
 	for i = 1, Game.MinionCount() do
 		local minion = Game.Minion(i)
@@ -183,6 +183,19 @@ local function CircleCircleIntersection(c1, c2, r1, r2)
 	local S1 = PA + H * Direction:Perpendicular() 
 	local S2 = PA - H * Direction:Perpendicular() 
 	return S1, S2 
+end
+
+local function EnableOrb(bool)
+	if Orb == 1 then
+		EOW:SetMovements(bool)
+		EOW:SetAttacks(bool)
+	elseif Orb == 2 then
+		_G.SDK.Orbwalker:SetMovement(bool)
+		_G.SDK.Orbwalker:SetAttack(bool)
+	else
+		GOS.BlockMovement = not bool
+		GOS.BlockAttack = not bool
+	end
 end
 
 --// Menu
@@ -437,21 +450,29 @@ function Combo()
     if target == nil then return end
     if Ready(_R) and ValidTarget(target, R.Range) then
         if Rdmg(target) > target.health and Illaoi.C.R:Value() or HeroesAround(myHero.pos, R.Range, 300 - myHero.team) > Illaoi.C.Rx:Value() then
-            Control.CastSpell(HK_R)
+			EnableOrb(false)
+			Control.CastSpell(HK_R)
+			DelayAction(function() EnableOrb(true) end, 0.4)
         end
     end 
 	if Ready(_E) and ValidTarget(target, E.Range) and Illaoi.C.E:Value() then
         if target:GetCollision(E.Width, E.Speed, E.Delay) == 0 then
             local pos = GetPred(target, E.Speed, 0.25 + (Game.Latency()/1000))
+			EnableOrb(false)
 			CustomCast(HK_E, pos, 250)
+			DelayAction(function() EnableOrb(true) end, 0.4)
         end
     end
 	if Ready(_Q) and ValidTarget(target, Q.Range) and Illaoi.C.Q:Value() then
         local pos = GetPred(target, Q.Speed, 0.25 + (Game.Latency()/1000))
+		EnableOrb(false)
 		CustomCast(HK_Q, pos, 250)
+		DelayAction(function() EnableOrb(true) end, 0.4)
     end
     if Ready(_W) and ValidTarget(target, W.Range) and Illaoi.C.W:Value() then
-        Control.CastSpell(HK_W, target)
+		EnableOrb(false)
+		Control.CastSpell(HK_W, target)
+		DelayAction(function() EnableOrb(true) end, 0.4)
     end
 end
 
@@ -464,7 +485,9 @@ function Lane()
             if Ready(_Q) and ValidTarget(minion, Q.Range) and Illaoi.LC.Q:Value() then
                 if minion:GetCollision(Q.Width, Q.Speed, E.Speed) >= Illaoi.LC.QMin:Value() then
                     local pos = GetPred(minion, Q.Speed, 0.25 + (Game.Latency()/1000))
+					EnableOrb(false)
 					CustomCast(HK_Q, pos, 250)
+					DelayAction(function() EnableOrb(true) end, 0.4)
                 end
             end
         end
@@ -479,10 +502,14 @@ function Jungle()
         if minion and minion.team == 300 then
             if Ready(_Q) and ValidTarget(minion, Q.Range) and Illaoi.JC.Q:Value() then
                 local pos = GetPred(minion, Q.Speed, 0.25 + (Game.Latency()/1000))
+				EnableOrb(false)
 				CustomCast(HK_Q, pos, 250)
+				DelayAction(function() EnableOrb(true) end, 0.4)
             end
             if Ready(_W) and ValidTarget(minion, W.Range) and Illaoi.JC.W:Value() then
-                Control.CastSpell(HK_W, minion.pos)
+				EnableOrb(false)
+				Control.CastSpell(HK_W, minion.pos)
+				DelayAction(function() EnableOrb(true) end, 0.4)
             end
         end
     end
@@ -495,7 +522,9 @@ function Harass()
     if target == nil then return end
 	if Ready(_Q) and ValidTarget(target, Q.Range) and Illaoi.H.Q:Value() then
         local pos = GetPred(target, Q.Speed, 0.25 + (Game.Latency()/1000))
+		EnableOrb(false)
 		CustomCast(HK_Q, pos, 250)
+		DelayAction(function() EnableOrb(true) end, 0.4)
     end
 end
 
