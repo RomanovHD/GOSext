@@ -40,11 +40,11 @@ local function IsImmobileTarget(unit)
 end
 
 local function PercentHP(target)
-    return 100 * target.health / target.maxHealth
+	return 100 * target.health / target.maxHealth
 end
 
 local function PercentMP(target)
-    return 100 * target.mana / target.maxMana
+	return 100 * target.mana / target.maxMana
 end
 
 local function OnScreen(unit)
@@ -114,7 +114,7 @@ local HKITEM = {
 local function Rdmg(target)
 	local level = myHero:GetSpellData(_R).level
 	if Ready(_R) then
-    	return CalcPhysicalDamage(myHero, target, (150 + 100 * level + 0.5 * myHero.totalDamage))
+		return CalcPhysicalDamage(myHero, target, (50 + 100 * level + 0.5 * myHero.bonusDamage))
 	end
 	return 0
 end
@@ -144,8 +144,8 @@ local function RSdmg(target)
 end
 
 local function NoPotion()
-	for i = 0, 63 do 
-	local buff = myHero:GetBuff(i)
+	for i = 0, myHero.buffCount do 
+		local buff = myHero:GetBuff(i)
 		if buff.type == 13 and Game.Timer() < buff.expireTime then 
 			return false
 		end
@@ -156,17 +156,17 @@ end
 local sqrt = math.sqrt
 
 local function GetDistanceSqr(p1, p2)
-    local dx = p1.x - p2.x
-    local dz = p1.z - p2.z
-    return (dx * dx + dz * dz)
+	local dx = p1.x - p2.x
+	local dz = p1.z - p2.z
+	return (dx * dx + dz * dz)
 end
 
 local function GetDistance(p1, p2)
-    return sqrt(GetDistanceSqr(p1, p2))
+	return sqrt(GetDistanceSqr(p1, p2))
 end
 
 local function GetDistance2D(p1,p2)
-    return sqrt((p2.x - p1.x)*(p2.x - p1.x) + (p2.y - p1.y)*(p2.y - p1.y))
+	return sqrt((p2.x - p1.x)*(p2.x - p1.x) + (p2.y - p1.y)*(p2.y - p1.y))
 end
 
 local function ClosestToMouse(p1, p2) 
@@ -362,13 +362,13 @@ function OnWaypoint(unit)
 	if _OnWaypoint[unit.networkID] == nil then _OnWaypoint[unit.networkID] = {pos = unit.posTo , speed = unit.ms, time = Game.Timer()} end
 	if _OnWaypoint[unit.networkID].pos ~= unit.posTo then 
 		_OnWaypoint[unit.networkID] = {startPos = unit.pos, pos = unit.posTo , speed = unit.ms, time = Game.Timer()}
-			DelayAction(function()
-				local time = (Game.Timer() - _OnWaypoint[unit.networkID].time)
-				local speed = GetDistance2D(_OnWaypoint[unit.networkID].startPos,unit.pos)/(Game.Timer() - _OnWaypoint[unit.networkID].time)
-				if speed > 1250 and time > 0 and unit.posTo == _OnWaypoint[unit.networkID].pos and GetDistance(unit.pos,_OnWaypoint[unit.networkID].pos) > 200 then
-					_OnWaypoint[unit.networkID].speed = GetDistance2D(_OnWaypoint[unit.networkID].startPos,unit.pos)/(Game.Timer() - _OnWaypoint[unit.networkID].time)
-				end
-			end,0.05)
+		DelayAction(function()
+			local time = (Game.Timer() - _OnWaypoint[unit.networkID].time)
+			local speed = GetDistance2D(_OnWaypoint[unit.networkID].startPos,unit.pos)/(Game.Timer() - _OnWaypoint[unit.networkID].time)
+			if speed > 1250 and time > 0 and unit.posTo == _OnWaypoint[unit.networkID].pos and GetDistance(unit.pos,_OnWaypoint[unit.networkID].pos) > 200 then
+				_OnWaypoint[unit.networkID].speed = GetDistance2D(_OnWaypoint[unit.networkID].startPos,unit.pos)/(Game.Timer() - _OnWaypoint[unit.networkID].time)
+			end
+		end,0.05)
 	end
 	return _OnWaypoint[unit.networkID]
 end
@@ -431,106 +431,106 @@ local function CustomCast(spell, pos, delay)
 end
 
 function Tick()
-    local Mode = GetMode()
+	local Mode = GetMode()
 	if Mode == "Combo" then
 		Combo()
 	elseif Mode == "Clear" then
 		Lane()
-        Jungle()
+		Jungle()
 	elseif Mode == "Harass" then
 		Harass()
 	end
-        Summoners()
-        Activator()
+	Summoners()
+	Activator()
 end
 
 function Combo()
-    if Illaoi.MM.C:Value() > PercentMP(myHero) then return end
-    local target = GetTarget(E.Range)
-    if target == nil then return end
-    if Ready(_R) and ValidTarget(target, R.Range) then
-        if Rdmg(target) > target.health and Illaoi.C.R:Value() or HeroesAround(myHero.pos, R.Range, 300 - myHero.team) +1 > Illaoi.C.Rx:Value() then
+	if Illaoi.MM.C:Value() > PercentMP(myHero) then return end
+	local target = GetTarget(E.Range)
+	if target == nil then return end
+	if Ready(_R) and ValidTarget(target, R.Range) then
+		if Rdmg(target) > target.health and Illaoi.C.R:Value() or HeroesAround(myHero.pos, R.Range, 300 - myHero.team) +1 > Illaoi.C.Rx:Value() then
 			EnableOrb(false)
 			Control.CastSpell(HK_R)
 			DelayAction(function() EnableOrb(true) end, 0.4)
-        end
-    end 
+		end
+	end 
 	if Ready(_E) and ValidTarget(target, E.Range) and Illaoi.C.E:Value() then
-        if target:GetCollision(E.Width, E.Speed, E.Delay) == 0 then
-            local pos = GetPred(target, E.Speed, 0.25 + (Game.Latency()/1000))
+		if target:GetCollision(E.Width, E.Speed, E.Delay) == 0 then
+			local pos = GetPred(target, E.Speed, 0.25 + (Game.Latency()/1000))
 			EnableOrb(false)
 			CustomCast(HK_E, pos, 250)
 			DelayAction(function() EnableOrb(true) end, 0.4)
-        end
-    end
+		end
+	end
 	if Ready(_Q) and ValidTarget(target, Q.Range) and Illaoi.C.Q:Value() then
-        local pos = GetPred(target, Q.Speed, 0.25 + (Game.Latency()/1000))
+		local pos = GetPred(target, Q.Speed, 0.25 + (Game.Latency()/1000))
 		EnableOrb(false)
 		CustomCast(HK_Q, pos, 250)
 		DelayAction(function() EnableOrb(true) end, 0.4)
-    end
-    if Ready(_W) and ValidTarget(target, W.Range) and Illaoi.C.W:Value() then
+	end
+	if Ready(_W) and ValidTarget(target, W.Range) and Illaoi.C.W:Value() then
 		EnableOrb(false)
 		Control.CastSpell(HK_W, target)
 		DelayAction(function() EnableOrb(true) end, 0.4)
-    end
+	end
 end
 
 function Lane()
 	if Illaoi.K.Clear:Value() == false then return end
-    if Illaoi.MM.LC:Value() > PercentMP(myHero) then return end
-    for i = 1, Game.MinionCount() do
+	if Illaoi.MM.LC:Value() > PercentMP(myHero) then return end
+	for i = 1, Game.MinionCount() do
 		local minion = Game.Minion(i)
-        if minion and minion.team == 200 then
-            if Ready(_Q) and ValidTarget(minion, Q.Range) and Illaoi.LC.Q:Value() then
-                if minion:GetCollision(Q.Width, Q.Speed, E.Speed) >= Illaoi.LC.QMin:Value() then
-                    local pos = GetPred(minion, Q.Speed, 0.25 + (Game.Latency()/1000))
+		if minion and minion.team == 200 then
+			if Ready(_Q) and ValidTarget(minion, Q.Range) and Illaoi.LC.Q:Value() then
+				if minion:GetCollision(Q.Width, Q.Speed, E.Speed) >= Illaoi.LC.QMin:Value() then
+					local pos = GetPred(minion, Q.Speed, 0.25 + (Game.Latency()/1000))
 					EnableOrb(false)
 					CustomCast(HK_Q, pos, 250)
 					DelayAction(function() EnableOrb(true) end, 0.4)
-                end
-            end
-        end
-    end
+				end
+			end
+		end
+	end
 end
 
 function Jungle()
 	if Illaoi.K.Clear:Value() == false then return end
-    if Illaoi.MM.JC:Value() > PercentMP(myHero) then return end
-    for i = 1, Game.MinionCount() do
+	if Illaoi.MM.JC:Value() > PercentMP(myHero) then return end
+	for i = 1, Game.MinionCount() do
 		local minion = Game.Minion(i)
-        if minion and minion.team == 300 then
-            if Ready(_Q) and ValidTarget(minion, Q.Range) and Illaoi.JC.Q:Value() then
-                local pos = GetPred(minion, Q.Speed, 0.25 + (Game.Latency()/1000))
+		if minion and minion.team == 300 then
+			if Ready(_Q) and ValidTarget(minion, Q.Range) and Illaoi.JC.Q:Value() then
+				local pos = GetPred(minion, Q.Speed, 0.25 + (Game.Latency()/1000))
 				EnableOrb(false)
 				CustomCast(HK_Q, pos, 250)
 				DelayAction(function() EnableOrb(true) end, 0.4)
-            end
-            if Ready(_W) and ValidTarget(minion, W.Range) and Illaoi.JC.W:Value() then
+			end
+			if Ready(_W) and ValidTarget(minion, W.Range) and Illaoi.JC.W:Value() then
 				EnableOrb(false)
 				Control.CastSpell(HK_W, minion.pos)
 				DelayAction(function() EnableOrb(true) end, 0.4)
-            end
-        end
-    end
+			end
+		end
+	end
 end
 
 function Harass()
 	if Illaoi.K.Harass:Value() == false then return end
-    if Illaoi.MM.H:Value() > PercentMP(myHero) then return end
-    local target = GetTarget(E.Range)
-    if target == nil then return end
+	if Illaoi.MM.H:Value() > PercentMP(myHero) then return end
+	local target = GetTarget(E.Range)
+	if target == nil then return end
 	if Ready(_Q) and ValidTarget(target, Q.Range) and Illaoi.H.Q:Value() then
-        local pos = GetPred(target, Q.Speed, 0.25 + (Game.Latency()/1000))
+		local pos = GetPred(target, Q.Speed, 0.25 + (Game.Latency()/1000))
 		EnableOrb(false)
 		CustomCast(HK_Q, pos, 250)
 		DelayAction(function() EnableOrb(true) end, 0.4)
-    end
+	end
 end
 
 function Summoners()
 	local target = GetTarget(1500)
-    if target == nil then return end
+	if target == nil then return end
 	if GetMode() == "Combo" then
 		if myHero:GetSpellData(SUMMONER_1).name == "SummonerSmite" or myHero:GetSpellData(SUMMONER_1).name == "S5_SummonerSmitePlayerGanker" or myHero:GetSpellData(SUMMONER_1).name == "S5_SummonerSmiteDuel"
 		or myHero:GetSpellData(SUMMONER_2).name == "SummonerSmite" or myHero:GetSpellData(SUMMONER_2).name == "S5_SummonerSmitePlayerGanker" or myHero:GetSpellData(SUMMONER_1).name == "S5_SummonerSmiteDuel" then
@@ -604,18 +604,18 @@ function Summoners()
 	or myHero:GetSpellData(SUMMONER_2).name == "SummonerBoost" then
 		if Illaoi.A.S.Cleanse:Value() then
 			for i = 0, myHero.buffCount do
-			local buff = myHero:GetBuff(i);
+				local buff = myHero:GetBuff(i);
 				if buff.count > 0 then
 					if ((buff.type == 5 and Illaoi.A.S.Stun:Value())
-					or (buff.type == 7 and  Illaoi.A.S.Silence:Value())
-					or (buff.type == 8 and  Illaoi.A.S.Taunt:Value())
-					or (buff.type == 9 and  Illaoi.A.S.Poly:Value())
-					or (buff.type == 10 and  Illaoi.A.S.Slow:Value())
-					or (buff.type == 11 and  Illaoi.A.S.Root:Value())
-					or (buff.type == 21 and  Illaoi.A.S.Flee:Value())
-					or (buff.type == 22 and  Illaoi.A.S.Charm:Value())
-					or (buff.type == 25 and  Illaoi.A.S.Blind:Value())
-					or (buff.type == 28 and  Illaoi.A.S.Flee:Value())) then
+					or (buff.type == 7 and Illaoi.A.S.Silence:Value())
+					or (buff.type == 8 and Illaoi.A.S.Taunt:Value())
+					or (buff.type == 9 and Illaoi.A.S.Poly:Value())
+					or (buff.type == 10 and Illaoi.A.S.Slow:Value())
+					or (buff.type == 11 and Illaoi.A.S.Root:Value())
+					or (buff.type == 21 and Illaoi.A.S.Flee:Value())
+					or (buff.type == 22 and Illaoi.A.S.Charm:Value())
+					or (buff.type == 25 and Illaoi.A.S.Blind:Value())
+					or (buff.type == 28 and Illaoi.A.S.Flee:Value())) then
 						if myHero:GetSpellData(SUMMONER_1).name == "SummonerBoost" and Ready(SUMMONER_1) then
 							Control.CastSpell(HK_SUMMONER_1)
 						elseif myHero:GetSpellData(SUMMONER_2).name == "SummonerBoost" and Ready(SUMMONER_2) then
@@ -630,7 +630,7 @@ end
 
 function Activator()
 	local target = GetTarget(900)
-    if target == nil then return end
+	if target == nil then return end
 	local items = {}
 	for slot = ITEM_1,ITEM_6 do
 		local id = myHero:GetItemData(slot).itemID 
@@ -638,18 +638,18 @@ function Activator()
 			items[id] = slot
 		end
 	end
-
+	
 	local Potion = items[2003] or items[2010] or items[2031] or items[2032] or items[2033]
 	if Potion and myHero:GetSpellData(Potion).currentCd == 0 and Illaoi.A.P.Pot:Value() and PercentHP(myHero) < Illaoi.A.P.HP:Value() and NoPotion() then
 		Control.CastSpell(HKITEM[Potion])
 	end
-
+	
 	if GetMode() == "Combo" then
 		local Randuin = items[3143]
 		if Randuin and myHero:GetSpellData(Randuin).currentCd == 0 and Illaoi.A.I.RO:Value() and myHero.pos:DistanceTo(target.pos) < 500 then
 			Control.CastSpell(HKITEM[Randuin])
 		end
-
+		
 		local Proto = items[3152] or items[3146] or items[3146] or items[3030]
 		if Proto and myHero:GetSpellData(Proto).currentCd == 0 and Illaoi.A.I.Proto:Value() and myHero.pos:DistanceTo(target.pos) > 550 then
 			Control.CastSpell(HKITEM[Proto], target.pos)
@@ -658,11 +658,11 @@ function Activator()
 end
 
 function Drawings()
-    if myHero.dead then return end
-	if Illaoi.D.Q:Value() and Ready(_Q) then Draw.Circle(myHero.pos, Q.Range, 3,  Draw.Color(255, 000, 222, 255)) end
-    if Illaoi.D.W:Value() and Ready(_W) then Draw.Circle(myHero.pos, W.Range, 3,  Draw.Color(255, 255, 200, 000)) end
-	if Illaoi.D.E:Value() and Ready(_E) then Draw.Circle(myHero.pos, E.Range, 3,  Draw.Color(255, 246, 000, 255)) end
-	if Illaoi.D.R:Value() and Ready(_R) then Draw.Circle(myHero.pos, R.Range, 3,  Draw.Color(255, 000, 043, 255)) end
+	if myHero.dead then return end
+	if Illaoi.D.Q:Value() and Ready(_Q) then Draw.Circle(myHero.pos, Q.Range, 3, Draw.Color(255, 000, 222, 255)) end
+	if Illaoi.D.W:Value() and Ready(_W) then Draw.Circle(myHero.pos, W.Range, 3, Draw.Color(255, 255, 200, 000)) end
+	if Illaoi.D.E:Value() and Ready(_E) then Draw.Circle(myHero.pos, E.Range, 3, Draw.Color(255, 246, 000, 255)) end
+	if Illaoi.D.R:Value() and Ready(_R) then Draw.Circle(myHero.pos, R.Range, 3, Draw.Color(255, 000, 043, 255)) end
 	if Illaoi.D.T:Value() then
 		local textPosC = myHero.pos:To2D()
 		if Illaoi.K.Clear:Value() then
