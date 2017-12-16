@@ -74,7 +74,7 @@ local function Edmg(target)
 end
 
 local function Rdmg(target)
-    if myHero:GetSpellData(spell).currentCd == 0 then
+    if Game.CanUseSpell(_R) == 0 then
         return CalcMagicalDamage(myHero,target,(187.5 + 187.5 * myHero:GetSpellData(_R).level + 3.3 * myHero.bonusDamage + 2.85 * myHero.ap)/2.5)
     end
     return 0
@@ -229,6 +229,15 @@ RepoKatarina:MenuElement({id = "Combo", name = "Combo", type = MENU})
         RepoKatarina.Combo.R:MenuElement({id = "RAoE", name = "Enable R AoE", value = true})
         RepoKatarina.Combo.R:MenuElement({id = "Rx", name = "X enemies to R", value = 3, min = 2, max = 5})
         RepoKatarina.Combo.R:MenuElement({id = "Stop", name = "Stop R if no targets", value = true})
+    RepoKatarina.Combo:MenuElement({id = "HG", name = "Item - Hextech Gunblade", value = true})
+    if myHero:GetSpellData(SUMMONER_1).name == "SummonerDot"
+	or myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" then
+        RepoKatarina.Combo:MenuElement({id = "IG", name = "Spell - Ignite", value = true})
+    end
+    if myHero:GetSpellData(SUMMONER_1).name == "SummonerExhaust"
+	or myHero:GetSpellData(SUMMONER_2).name == "SummonerExhaust" then
+        RepoKatarina.Combo:MenuElement({id = "EX", name = "Spell - Exhaust", value = true})
+    end
 
 Callback.Add("Tick", function() Tick() end)
 
@@ -314,8 +323,9 @@ function Combo()
     local Wmode = RepoKatarina.Combo.W.Mode:Value()
     local Emode = RepoKatarina.Combo.E.Mode:Value()
     
-    if RepoKatarina.Combo.Q.Enable:Value() and Ready(_Q) then
+    if RepoKatarina.Combo.Q.Enable:Value() and Ready(_Q) and not Ready(_W) then
         if GetDistance(myHero.pos,target.pos) > Q.range then return end
+        if myHero:GetSpellData(_W).level ~= 0 and myHero:GetSpellData(_W).castTime < 1.25 then return end
         if Qmode == 1 then
             if not Ready(_E) then
                 if GetDistance(myHero.pos,target.pos) < Me.range then
@@ -338,9 +348,9 @@ function Combo()
     end
 
     if RepoKatarina.Combo.W.Enable:Value() and Ready(_W) then
-        if Wmode == 1 then
-            if not Ready(_E) then
-                if GetDistance(myHero.pos,target.pos) < Me.range then
+        if GetDistance(myHero.pos,target.pos) < Passive.radius + (W.radius/2) then
+            if Wmode == 1 then
+                if not Ready(_E) then
                     if not RepoKatarina.Combo.W.AA:Value() then
                         if myHero.attackData.state == 2 then
                             Control.CastSpell(HK_W)
@@ -348,12 +358,10 @@ function Combo()
                     else
                         Control.CastSpell(HK_W)
                     end
-                else
-                    Control.CastSpell(HK_W)
                 end
+            else
+                Control.CastSpell(HK_W)
             end
-        else
-            Control.CastSpell(HK_W)
         end
     end
 
@@ -362,7 +370,7 @@ function Combo()
         if Emode == 1 then
             for i = 1, #Dagger do
                 local Evector = Vector(Dagger[i]) - Vector(Vector(Dagger[i]) - Vector(target.pos)):Normalized()*135
-                if GetDistance(Dagger[i],target.pos) < W.radius + Passive.radius then
+                if GetDistance(Dagger[i],target.pos) < GetDistance(myHero.pos,target.pos) then
                     if RepoKatarina.Combo.E.AA:Value() then
                         if GetDistance(myHero.pos,target.pos) < Me.range then
                             if myHero.attackData.state == 2 then
@@ -374,7 +382,7 @@ function Combo()
                             end
                         else
                             if GetDistance(Dagger[i],target.pos) > W.radius then
-                                Control.CastSpell(HK_E,W.vector)
+                                Control.CastSpell(HK_E,Evector)
                             else
                                 Control.CastSpell(HK_E,Dagger[i])
                             end
@@ -403,26 +411,27 @@ function Combo()
             end
         elseif Emode == 2 then
             for i = 1, #Dagger do
+                local Evector = Vector(Dagger[i]) - Vector(Vector(Dagger[i]) - Vector(target.pos)):Normalized()*135
                 if GetDistance(Dagger[i],target.pos) > W.radius + Passive.radius then return end
                 if RepoKatarina.Combo.E.AA:Value() then
                     if GetDistance(myHero.pos,target.pos) < Me.range then
                         if myHero.attackData.state == 2 then
                             if GetDistance(Dagger[i],target.pos) > W.radius then
-                                Control.CastSpell(HK_E,W.vector)
+                                Control.CastSpell(HK_E,Evector)
                             else
                                 Control.CastSpell(HK_E,Dagger[i])
                             end
                         end
                     else
                         if GetDistance(Dagger[i],target.pos) > W.radius then
-                            Control.CastSpell(HK_E,W.vector)
+                            Control.CastSpell(HK_E,Evector)
                         else
                             Control.CastSpell(HK_E,Dagger[i])
                         end
                     end
                 else
                     if GetDistance(Dagger[i],target.pos) > W.radius then
-                        Control.CastSpell(HK_E,W.vector)
+                        Control.CastSpell(HK_E,Evector)
                     else
                         Control.CastSpell(HK_E,Dagger[i])
                     end
@@ -444,12 +453,43 @@ function Combo()
         end
     end
 
+    if myHero:GetSpellData(SUMMONER_1).name == "SummonerDot"
+    or myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" then
+        if RepoKatarina.Combo.IG:Value() and Game.CanUseSpell(_R) == 0 then
+            if myHero:GetSpellData(SUMMONER_1).name == "SummonerDot" and Ready(SUMMONER_1) and ((R.range - target.distance)/(target.ms)) * Rdmg(target) + IGdmg(target) >= target.health 
+            and myHero.pos:DistanceTo(target.pos) < 550 then
+                Control.CastSpell(HK_SUMMONER_1, target)
+            elseif myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" and Ready(SUMMONER_2) and ((R.range - target.distance)/(target.ms)) * Rdmg(target) + IGdmg(target) >= target.health 
+            and myHero.pos:DistanceTo(target.pos) < 550 then
+                Control.CastSpell(HK_SUMMONER_2, target)
+            end
+        end
+    end
+    if myHero:GetSpellData(SUMMONER_1).name == "SummonerExhaust"
+    or myHero:GetSpellData(SUMMONER_2).name == "SummonerExhaust" then
+        if RepoKatarina.Combo.EX:Value() and Game.CanUseSpell(_R) == 0 then
+            if myHero:GetSpellData(SUMMONER_1).name == "SummonerExhaust" and Ready(SUMMONER_1) and ((R.range - target.distance)/(target.ms)) * Rdmg(target) >= target.health - target.health * 0.3 * 2.5
+            and myHero.pos:DistanceTo(target.pos) < 550 then
+                Control.CastSpell(HK_SUMMONER_1, target)
+            elseif myHero:GetSpellData(SUMMONER_2).name == "SummonerExhaust" and Ready(SUMMONER_2) and ((R.range - target.distance)/(target.ms)) * Rdmg(target) >= target.health - target.health * 0.3 * 2.5
+            and myHero.pos:DistanceTo(target.pos) < 550 then
+                Control.CastSpell(HK_SUMMONER_2, target)
+            end
+        end
+    end
+
+    local Pistol = items[3146]
+    local Bilgewater = items[3144]
     if RepoKatarina.Combo.R.Enable:Value() and Game.CanUseSpell(_R) == 0 then
         if RepoKatarina.Combo.R.Implement:Value() then
             if GetDistance(myHero.pos,target.pos) < R.range then
                 if (R.range - target.distance)/target.ms * Rdmg(target) >= target.health then
                     EnableOrb(false)
                     Control.CastSpell(HK_R)
+                elseif Bilgewater and myHero:GetSpellData(Bilgewater).currentCd == 0 and RepoKatarina.Combo.HG:Value() and ((R.range - target.distance)/(target.ms * 0.75 )) * Rdmg(target) + BCdmg(target) >= target.health then
+                    Control.CastSpell(HKITEM[Bilgewater], target.pos)
+                elseif Pistol and myHero:GetSpellData(Pistol).currentCd == 0 and RepoKatarina.Combo.HG:Value() and ((R.range - target.distance)/(target.ms * 0.6 )) * Rdmg(target) + HGdmg(target) >= target.health then
+                    Control.CastSpell(HKITEM[Pistol], target.pos)
                 end
             end
         end
