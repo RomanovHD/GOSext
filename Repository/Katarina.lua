@@ -295,30 +295,30 @@ RepoKatarina:MenuElement({type = MENU, id = "Activator", name = "Activator"})
 	RepoKatarina.Activator:MenuElement({type = MENU, id = "S", name = "Summoner Spells"})
 		if myHero:GetSpellData(SUMMONER_1).name == "SummonerSmite" or myHero:GetSpellData(SUMMONER_1).name == "S5_SummonerSmitePlayerGanker" or myHero:GetSpellData(SUMMONER_1).name == "S5_SummonerSmiteDuel"
 		or myHero:GetSpellData(SUMMONER_2).name == "SummonerSmite" or myHero:GetSpellData(SUMMONER_2).name == "S5_SummonerSmitePlayerGanker" or myHero:GetSpellData(SUMMONER_1).name == "S5_SummonerSmiteDuel" then
-			RepoKatarina.Activator.S:MenuElement({id = "Smite", name = "Combo Smite", value = true, leftIcon = "https://vignette.wikia.nocookie.net/leagueoflegends/images/0/05/Smite.png"})
+			RepoKatarina.Activator.S:MenuElement({id = "Smite", name = "Combo Smite", value = true})
 			RepoKatarina.Activator.S:MenuElement({id = "SmiteS", name = "Smite Stacks to Combo", value = 1, min = 1, max = 2})
 		end
 		if myHero:GetSpellData(SUMMONER_1).name == "SummonerHeal"
 		or myHero:GetSpellData(SUMMONER_2).name == "SummonerHeal" then
-			RepoKatarina.Activator.S:MenuElement({id = "Heal", name = "Heal", value = true, leftIcon = "https://vignette.wikia.nocookie.net/leagueoflegends/images/6/6e/Heal.png"})
+			RepoKatarina.Activator.S:MenuElement({id = "Heal", name = "Heal", value = true})
 			RepoKatarina.Activator.S:MenuElement({id = "HealHP", name = "HP Under %", value = 25, min = 0, max = 100})
 		end
 		if myHero:GetSpellData(SUMMONER_1).name == "SummonerBarrier"
 		or myHero:GetSpellData(SUMMONER_2).name == "SummonerBarrier" then
-			RepoKatarina.Activator.S:MenuElement({id = "Barrier", name = "Barrier", value = true, leftIcon = "https://vignette.wikia.nocookie.net/leagueoflegends/images/c/cc/Barrier.png"})
+			RepoKatarina.Activator.S:MenuElement({id = "Barrier", name = "Barrier", value = true})
 			RepoKatarina.Activator.S:MenuElement({id = "BarrierHP", name = "HP Under %", value = 25, min = 0, max = 100})
 		end
 		if myHero:GetSpellData(SUMMONER_1).name == "SummonerDot"
 		or myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" then
-			RepoKatarina.Activator.S:MenuElement({id = "Ignite", name = "Combo Ignite", value = true, leftIcon = "https://vignette.wikia.nocookie.net/leagueoflegends/images/f/f4/Ignite.png"})
+			RepoKatarina.Activator.S:MenuElement({id = "Ignite", name = "Combo Ignite", value = true})
 		end
 		if myHero:GetSpellData(SUMMONER_1).name == "SummonerExhaust"
 		or myHero:GetSpellData(SUMMONER_2).name == "SummonerExhaust" then
-			RepoKatarina.Activator.S:MenuElement({id = "Exh", name = "Combo Exhaust", value = true, leftIcon = "https://vignette.wikia.nocookie.net/leagueoflegends/images/4/4a/Exhaust.png"})
+			RepoKatarina.Activator.S:MenuElement({id = "Exh", name = "Combo Exhaust", value = true})
 		end
 		if myHero:GetSpellData(SUMMONER_1).name == "SummonerBoost"
 		or myHero:GetSpellData(SUMMONER_2).name == "SummonerBoost" then
-			RepoKatarina.Activator.S:MenuElement({id = "Cleanse", name = "Cleanse", value = true, leftIcon = "https://vignette.wikia.nocookie.net/leagueoflegends/images/9/95/Cleanse.png"})
+			RepoKatarina.Activator.S:MenuElement({id = "Cleanse", name = "Cleanse", value = true})
 		end
 
 RepoKatarina:MenuElement({id = "Draw", name = "Drawings", type = MENU})
@@ -621,7 +621,7 @@ function Activator2()
     if ZZ and myHero:GetSpellData(ZZ).currentCd == 0 and RepoKatarina.Activator.I.U.ZZ:Value() then
         for i = 1, Game.TurretCount() do
             local turret = Game.Turret(i)
-            if turret and turret.isAlly and HP(turret) < 100 and myHero.pos:DistanceTo(turret.pos) < 400 then    
+            if turret and turret.isAlly and PercentHP(turret) < 100 and myHero.pos:DistanceTo(turret.pos) < 400 then    
                 Control.CastSpell(HKITEM[ZZ], turret.pos)
             end
         end
