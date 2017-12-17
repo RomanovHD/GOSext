@@ -121,6 +121,16 @@ local function GetTarget(range)
 	return target
 end
 
+local function NoPotion()
+	for i = 0, myHero.buffCount do 
+	local buff = myHero:GetBuff(i)
+		if buff.type == 13 and Game.Timer() < buff.expireTime then 
+			return false
+		end
+	end
+	return true
+end
+
 local function GetMode()
 	if _G.EOWLoaded then
         if EOW.CurrentMode == 1 then
