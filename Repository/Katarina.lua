@@ -577,6 +577,7 @@ end
 
 function Activator2()
 	local target = GetTarget(1575)
+	if target == nil then return end
 	local items = {}
 	for slot = ITEM_1,ITEM_6 do
 		local id = myHero:GetItemData(slot).itemID 
