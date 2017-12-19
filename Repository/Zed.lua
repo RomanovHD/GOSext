@@ -263,9 +263,9 @@ local function EnableOrb(bool)
 	end
 end
 
-local RepoZed = MenuElement({type = MENU, id = "RepoZed", name = "Roman Repo 7.24", leftIcon = "https://raw.githubusercontent.com/RomanovHD/GOSext/master/Repository/Screenshot_1.png"})
+local RepoZed = MenuElement({type = MENU, id = "RepoZed", name = "Romanov's Repository 7.24", leftIcon = "https://raw.githubusercontent.com/RomanovHD/GOSext/master/Repository/Screenshot_1.png"})
 
-RepoZed:MenuElement({id = "Me", name = "Zed", drop = {"v2.0"}})
+RepoZed:MenuElement({id = "Me", name = "Zed", drop = {"v1.0"}})
 RepoZed:MenuElement({id = "Core", name = " ", drop = {"Champion Core"}})
 RepoZed:MenuElement({id = "Combo", name = "Combo", type = MENU})
 	RepoZed.Combo:MenuElement({id = "Q", name = "Q - Razor Shuriken", value = true})
@@ -283,11 +283,11 @@ RepoZed:MenuElement({id = "Combo", name = "Combo", type = MENU})
 	end	
 	RepoZed.Combo:MenuElement({id = "Mode", name = "Safe/Tryhard", key = string.byte("S"), toggle = true})
 
---[[RepoZed:MenuElement({id = "Clear", name = "Clear", type = MENU})
+RepoZed:MenuElement({id = "Clear", name = "Clear", type = MENU})
 	RepoZed.Clear:MenuElement({id = "Q", name = "Q - Razor Shuriken", value = true})
 	RepoZed.Clear:MenuElement({id = "W", name = "W - Living Shadow", value = true})
 	RepoZed.Clear:MenuElement({id = "E", name = "E - Shadow Slash", value = true})
-	RepoZed.Clear:MenuElement({id = "Key", name = "Enable/Disable", key = string.byte("A"), toggle = true})]]--
+	RepoZed.Clear:MenuElement({id = "Key", name = "Enable/Disable", key = string.byte("A"), toggle = true})
 
 RepoZed:MenuElement({id = "Utility", name = " ", drop = {"Champion Utility"}})
 RepoZed:MenuElement({id = "Leveler", name = "Auto Leveler", type = MENU})
@@ -380,8 +380,8 @@ function Tick()
 	local Mode = GetMode()
 	if Mode == "Combo" then
 		Combo()
-	--[[elseif Mode == "Clear" then
-		Lane()]]--
+	elseif Mode == "Clear" then
+		Lane()
 	end
 	Activator()
 	Activator2()
@@ -611,22 +611,47 @@ function Lane()
 		local minion = Game.Minion(i)
 		if minion then
 			if minion.team == 300 - myHero.team then
-				if IsValidTarget(minion,Q.range) and RepoZed.Clear.Q:Value() and Ready(_Q) and MinionsAround(minion.pos, 400, 300 - myHero.team) >= 3 then
-					Control.CastSpell(HK_Q,minion)
+				if IsValidTarget(minion,W.range) and RepoZed.Clear.W:Value() and Ready(_W) and MinionsAround(minion.pos, 290, 300 - myHero.team) >= 5 and myHero:GetSpellData(_W).toggleState == 0 then
+					CastW(minion)
 				end
-				if RepoZed.Clear.W:Value() and Ready(_W) and MinionsAround(myHero.pos, Passive.radius, 300 - myHero.team) >= 4 then
-					Control.CastSpell(HK_W)
+				if RepoZed.Clear.E:Value() and Ready(_E) then
+					if MinionsAround(_shadowPos, 290, 300 - myHero.team) >= 3 
+					or MinionsAround(myHero.pos, 290, 300 - myHero.team) >= 3 then
+						Control.CastSpell(HK_E)
+					end
+				end
+				if IsValidTarget(minion,W.range + Q.range) and RepoZed.Clear.Q:Value() and Ready(_Q) then
+					if GetDistance(minion.pos,_shadowPos) >= GetDistance(minion.pos,myHero.pos) then
+						if GetDistance(minion.pos,myHero.pos) <= Q.range then
+							CastQ(minion,myHero.pos)
+						end
+					else
+						if GetDistance(minion.pos,_shadowPos) <= Q.range then
+							CastQ(minion,_shadowPos)
+						end
+					end
 				end
 			end
 			if minion.team == 300 then
-				if IsValidTarget(minion,Q.range) and RepoZed.Clear.Q:Value() and Ready(_Q) then
-					Control.CastSpell(HK_Q,minion)
+				if IsValidTarget(minion,W.range) and RepoZed.Clear.W:Value() and Ready(_W) and MinionsAround(minion.pos, 290, 300) >= 1 and myHero:GetSpellData(_W).toggleState == 0 then
+					CastW(minion)
 				end
-				if IsValidTarget(minion,Passive.radius) and RepoZed.Clear.W:Value() and Ready(_W) then
-					Control.CastSpell(HK_W)
+				if RepoZed.Clear.E:Value() and Ready(_E) then
+					if MinionsAround(_shadowPos, 290, 300) >= 1 
+					or MinionsAround(myHero.pos, 290, 300) >= 1 then
+						Control.CastSpell(HK_E)
+					end
 				end
-				if IsValidTarget(minion,E.range) and RepoZed.Clear.E:Value() and Ready(_E) then
-					Control.CastSpell(HK_E,minion)
+				if IsValidTarget(minion,W.range + Q.range) and RepoZed.Clear.Q:Value() and Ready(_Q) then
+					if GetDistance(minion.pos,_shadowPos) >= GetDistance(minion.pos,myHero.pos) then
+						if GetDistance(minion.pos,myHero.pos) <= Q.range then
+							CastQ(minion,myHero.pos)
+						end
+					else
+						if GetDistance(minion.pos,_shadowPos) <= Q.range then
+							CastQ(minion,_shadowPos)
+						end
+					end
 				end
 			end
 		end
@@ -879,11 +904,11 @@ function Drawings()
 		else
 			Draw.Text("TRYHARD MODE", 20, textPos.x - 57, textPos.y + 60, Draw.Color(255, 225, 000, 000)) 
 		end
-		--[[if RepoZed.Clear.Key:Value() then
+		if RepoZed.Clear.Key:Value() then
 			Draw.Text("CLEAR ENABLED", 20, textPos.x - 57, textPos.y + 40, Draw.Color(255, 000, 255, 000)) 
 		else
 			Draw.Text("CLEAR DISABLED", 20, textPos.x - 57, textPos.y + 40, Draw.Color(255, 225, 000, 000)) 
-		end]]--
+		end
 	end
 
 	if RepoZed.Draw.D:Value() then
