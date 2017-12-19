@@ -263,9 +263,9 @@ local function EnableOrb(bool)
 	end
 end
 
-local RepoZed = MenuElement({type = MENU, id = "RepoZed", name = "Romanov's Repository 7.24", leftIcon = "https://raw.githubusercontent.com/RomanovHD/GOSext/master/Repository/Screenshot_1.png"})
+local RepoZed = MenuElement({type = MENU, id = "RepoZed", name = "Roman Repo 7.24", leftIcon = "https://raw.githubusercontent.com/RomanovHD/GOSext/master/Repository/Screenshot_1.png"})
 
-RepoZed:MenuElement({id = "Me", name = "Zed", drop = {"v1.0"}})
+RepoZed:MenuElement({id = "Me", name = "Zed", drop = {"v2.0"}})
 RepoZed:MenuElement({id = "Core", name = " ", drop = {"Champion Core"}})
 RepoZed:MenuElement({id = "Combo", name = "Combo", type = MENU})
 	RepoZed.Combo:MenuElement({id = "Q", name = "Q - Razor Shuriken", value = true})
