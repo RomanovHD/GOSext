@@ -1,10 +1,6 @@
--- ZedWHandler
--- ASSETS/Perks/Styles/Domination/TLords/TLords.lua
--- zedrdeathmark
-
 if myHero.charName ~= "Zed" then return end
 
-local Shadow = {}
+local _shadowPos = myHero.pos
 
 require "DamageLib"
 
@@ -29,10 +25,10 @@ local function IsImmune(unit)
     return false
 end
 
-local function IsMarked(unit)
+local function HasBuff(unit,name)
     for i = 0, unit.buffCount do
 		local buff = unit:GetBuff(i)
-        if buff.name == "zedrdeathmark" then
+        if buff.name == name then
             return true
         end
     end
@@ -267,19 +263,6 @@ local function EnableOrb(bool)
 	end
 end
 
-local function IsUnderTurret(unit)
-    for i = 1, Game.TurretCount() do
-        local turret = Game.Turret(i)
-        local range = (turret.boundingRadius + 750 + unit.boundingRadius / 2)
-        if turret.isEnemy and not turret.dead then
-            if turret.pos:DistanceTo(unit.pos) < range then
-                return true
-            end
-        end
-    end
-    return false
-end
-
 local RepoZed = MenuElement({type = MENU, id = "RepoZed", name = "Romanov's Repository 7.24", leftIcon = "https://raw.githubusercontent.com/RomanovHD/GOSext/master/Repository/Screenshot_1.png"})
 
 RepoZed:MenuElement({id = "Me", name = "Zed", drop = {"v1.0"}})
@@ -391,7 +374,10 @@ Callback.Add("Tick", function() Tick() end)
 Callback.Add("Draw", function() Drawings() end)
 
 function Tick()
-    local Mode = GetMode()
+	if myHero:GetSpellData(_W).toggleState == 0 then
+		_shadowPos = myHero.pos
+	end
+	local Mode = GetMode()
 	if Mode == "Combo" then
 		Combo()
 	--[[elseif Mode == "Clear" then
@@ -538,10 +524,10 @@ function AutoLevel()
 	end
 end
 
-function CastQ(target)
+function CastQ(target,from)
 	if Ready(_Q) and castSpell.state == 0 then
         if (Game.Timer() - OnWaypoint(target).time < 0.15 or Game.Timer() - OnWaypoint(target).time > 1.0) then
-            local qPred = GetPred(target,Q.speed,Q.delay + Game.Latency()/1000)
+            local qPred = GetPred(target,Q.speed,Q.delay + Game.Latency()/1000,from)
             CastSpell(HK_Q,qPred,Q.range + 200,250)
         end
 	end
@@ -551,7 +537,8 @@ function CastW(target)
 	if Ready(_W) and castSpell.state == 0 then
         if (Game.Timer() - OnWaypoint(target).time < 0.15 or Game.Timer() - OnWaypoint(target).time > 1.0) then
             local wPred = GetPred(target,W.speed,W.delay + Game.Latency()/1000)
-            CastSpell(HK_W,wPred,W.range + 200,250)
+			CastSpell(HK_W,wPred,W.range + 200,250)
+			_shadowPos = target.pos
         end
 	end
 end
@@ -569,13 +556,21 @@ function Combo()
 			Control.CastSpell(HK_E)
 		end
         if IsValidTarget(target,Q.range) and RepoZed.Combo.Q:Value() and Ready(_Q) then
-			if Ready(_W) and myHero:GetSpellData(_W).name == "ZedW2" then return end
-			CastQ(target)
+			if Ready(_W) and myHero:GetSpellData(_W).toggleState == 0 then return end
+			if GetDistance(target.pos,_shadowPos) >= GetDistance(target.pos,myHero.pos) then
+				if GetDistance(target.pos,myHero.pos) <= Q.range then
+					CastQ(target,myHero.pos)
+				end
+			else
+				if GetDistance(target.pos,_shadowPos) <= Q.range then
+					CastQ(target,_shadowPos)
+				end
+			end
 		end
     end
     
     if not RepoZed.Combo.Mode:Value() then
-        if IsValidTarget(target,R.range) and RepoZed.Combo.R:Value() and Passivedmg(target) + ELdmg(target) + ComboAA(target) + Qdmg(target) + Edmg(target) + IGdmg(target) + BOTRKdmg(target) + Rdmg(target) > target.health and myHero:GetSpellData(_R).toggleState == 0 then
+        if IsValidTarget(target,R.range) and Ready(_R) and RepoZed.Combo.R:Value() and Passivedmg(target) + ELdmg(target) + ComboAA(target) + Qdmg(target) + Edmg(target) + IGdmg(target) + BOTRKdmg(target) + Rdmg(target) > target.health and myHero:GetSpellData(_R).toggleState == 0 then
             Control.CastSpell(HK_R,target)
         end
 		if IsValidTarget(target,W.range + E.range) and RepoZed.Combo.W:Value() and Ready(_W) and myHero:GetSpellData(_W).toggleState == 0 then
@@ -585,17 +580,28 @@ function Combo()
 		if IsValidTarget(target,W.range) and RepoZed.Combo.E:Value() and Ready(_E) and myHero:GetSpellData(_W).name == "ZedW2" then
 			Control.CastSpell(HK_E)
 		end
-		if myHero:GetSpellData(_W).toggleState == 2 then
+		if myHero:GetSpellData(_W).toggleState == 2 and GetDistance(_shadowPos,target.pos) < GetDistance(myHero.pos,target.pos) then
             Control.CastSpell(HK_W)
         end
-        if IsValidTarget(target,Q.range) and RepoZed.Combo.Q:Value() and Ready(_Q) then
-			if Ready(_W) and myHero:GetSpellData(_W).name == "ZedW2" then return end
-			CastQ(target)
+        if IsValidTarget(target,Q.range + W.range) and RepoZed.Combo.Q:Value() and Ready(_Q) then
+			if Ready(_W) and myHero:GetSpellData(_W).toggleState == 0 then return end
+			if GetDistance(target.pos,_shadowPos) >= GetDistance(target.pos,myHero.pos) then
+				if GetDistance(target.pos,myHero.pos) <= Q.range then
+					CastQ(target,myHero.pos)
+				end
+			else
+				if GetDistance(target.pos,_shadowPos) <= Q.range then
+					CastQ(target,_shadowPos)
+				end
+			end
 		end
 	end
 
-	if HeroesAround(myHero.pos, 290, 300 - myHero.team) >= 1 and RepoZed.Combo.E:Value() and Ready(_E) then
-		Control.CastSpell(HK_E)
+	if RepoZed.Combo.E:Value() and Ready(_E) then
+		if HeroesAround(_shadowPos, 290, 300 - myHero.team) >= 1 
+		or HeroesAround(myHero.pos, 290, 300 - myHero.team) >= 1 then
+			Control.CastSpell(HK_E)
+		end
 	end
 end
 
@@ -879,6 +885,7 @@ function Drawings()
 			Draw.Text("CLEAR DISABLED", 20, textPos.x - 57, textPos.y + 40, Draw.Color(255, 225, 000, 000)) 
 		end]]--
 	end
+
 	if RepoZed.Draw.D:Value() then
 		for i = 1, Game.HeroCount() do
 			local enemy = Game.Hero(i)
