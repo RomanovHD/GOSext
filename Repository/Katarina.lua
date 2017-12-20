@@ -1,7 +1,5 @@
 if myHero.charName ~= "Katarina" then return end
 
-local Dagger = {}
-
 require "DamageLib"
 
 local function Ready(spell)
@@ -182,32 +180,6 @@ local HKITEM = {
 	[ITEM_7] = HK_ITEM_7,
 }
 
-local function SlowImmobile(unit)
-	for i = 0, unit.buffCount do
-		local buff = unit:GetBuff(i)
-		if buff.count > 0 then
-            if (buff.type == 5 or 
-                buff.type == 8 or
-                buff.type == 9 or
-                buff.type == 10 or
-                buff.type == 11 or 
-                buff.type == 18 or
-                buff.type == 19 or
-                buff.type == 21 or 
-                buff.type == 22 or 
-                buff.type == 24 or 
-                buff.type == 28 or 
-                buff.type == 29 or 
-                buff.type == 30 or
-                buff.type == 31) 
-            then
-				return true
-			end
-		end
-	end
-	return false
-end
-
 local function IsUnderTurret(unit)
     for i = 1, Game.TurretCount() do
         local turret = Game.Turret(i)
@@ -221,9 +193,9 @@ local function IsUnderTurret(unit)
     return false
 end
 
-local RepoKatarina = MenuElement({type = MENU, id = "RepoKatarina", name = "Romanov's Repository 7.24", leftIcon = "https://raw.githubusercontent.com/RomanovHD/GOSext/master/Repository/Screenshot_1.png"})
+local RepoKatarina = MenuElement({type = MENU, id = "RepoKatarina", name = "Roman Repo 7.24", leftIcon = "https://raw.githubusercontent.com/RomanovHD/GOSext/master/Repository/Screenshot_1.png"})
 
-RepoKatarina:MenuElement({id = "Me", name = "Katarina", drop = {"v3.0"}})
+RepoKatarina:MenuElement({id = "Me", name = "Katarina", drop = {"v4.0"}})
 RepoKatarina:MenuElement({id = "Core", name = " ", drop = {"Champion Core"}})
 RepoKatarina:MenuElement({id = "Combo", name = "Combo", type = MENU})
     RepoKatarina.Combo:MenuElement({id = "Q", name = "Q - Bouncing Blade", value = true})
@@ -239,14 +211,26 @@ RepoKatarina:MenuElement({id = "Combo", name = "Combo", type = MENU})
     if myHero:GetSpellData(SUMMONER_1).name == "SummonerExhaust"
 	or myHero:GetSpellData(SUMMONER_2).name == "SummonerExhaust" then
         RepoKatarina.Combo:MenuElement({id = "EX", name = "Spell - Exhaust", value = true})
-    end
-    RepoKatarina.Combo:MenuElement({id = "Mode", name = "Alternate Modes [Safe/Tryhard]", key = string.byte("S"), toggle = true})
+	end
+
+RepoKatarina:MenuElement({id = "Harass", name = "Harass", type = MENU})
+    RepoKatarina.Harass:MenuElement({id = "Q", name = "Q - Bouncing Blade", value = true})
+    RepoKatarina.Harass:MenuElement({id = "W", name = "W - Preparation", value = true})
+	RepoKatarina.Harass:MenuElement({id = "E", name = "E - Shunpo", value = true})
+	RepoKatarina.Harass:MenuElement({id = "X", name = "Block E into minion wave", value = 5, min = 0, max = 7})
 
 RepoKatarina:MenuElement({id = "Clear", name = "Clear", type = MENU})
 	RepoKatarina.Clear:MenuElement({id = "Q", name = "Q - Bouncing Blade", value = true})
+	RepoKatarina.Clear:MenuElement({id = "QX", name = "Minions [for lane]", value = 3, min = 1, max = 3})
 	RepoKatarina.Clear:MenuElement({id = "W", name = "W - Preparation", value = true})
+	RepoKatarina.Clear:MenuElement({id = "WX", name = "Minions [for lane]", value = 5, min = 1, max = 7})
 	RepoKatarina.Clear:MenuElement({id = "E", name = "E - Shunpo [Jungle only]", value = true})
 	RepoKatarina.Clear:MenuElement({id = "Key", name = "Enable/Disable", key = string.byte("A"), toggle = true})
+
+RepoKatarina:MenuElement({id = "Killsteal", name = "Killsteal", type = MENU})
+    RepoKatarina.Killsteal:MenuElement({id = "Q", name = "Q - Bouncing Blade", value = true})
+	RepoKatarina.Killsteal:MenuElement({id = "E", name = "E - Shunpo", value = true})
+	RepoKatarina.Killsteal:MenuElement({id = "R", name = "R - Death Lotus", value = true})
 
 RepoKatarina:MenuElement({id = "Utility", name = " ", drop = {"Champion Utility"}})
 RepoKatarina:MenuElement({id = "Leveler", name = "Auto Leveler", type = MENU})
@@ -335,16 +319,17 @@ function Tick()
     local Mode = GetMode()
 	if Mode == "Combo" then
 		Combo()
+	elseif Mode == "Harass" then
+		Harass()
 	elseif Mode == "Clear" then
 		Lane()
 	end
+	Killsteal()
 	Activator()
 	Activator2()
     AutoLevel()
     CancelR()
     RebootOrb()
-    DaggerAdd()
-    DaggerRemove()
 end
 
 function AutoLevel()
@@ -381,61 +366,30 @@ end
 
 function CancelR()
     if HeroesAround(myHero.pos, 550, 300 - myHero.team) == 0 and Spinning() then
-        EnableOrb(true)
+		EnableOrb(true)
     end
 end
 
 function RebootOrb()
     if Spinning() == false then
-        EnableOrb(true)
+		EnableOrb(true)
     end
-end
-
-function DaggerAdd()
-	for u = 1, Game.ParticleCount() do
-		local particle = Game.Particle(u)
-		if particle and particle.name == "Katarina_Base_W_Indicator_Ally.troy" then
-			local found = false
-			for i = 1, #Dagger do
-				if Dagger[i] == particle.pos then
-					found = true
-				end
-			end
-			if found == false then
-				table.insert(Dagger, particle.pos)
-			end
-		end
-	end
-end
-
-function DaggerRemove()
-	for i = 1, #Dagger do
-		local found = false
-		for u = 1, Game.ParticleCount() do
-			local particle = Game.Particle(u)
-			if particle and particle.name == "Katarina_Base_W_Indicator_Ally.troy" then
-				if Dagger[i] == particle.pos then
-					found = true
-				end
-			end
-		end
-		if found == false then
-			table.remove(Dagger, i)
-		end
-	end
 end
 
 lastW = Game.Timer()
+lastR = Game.Timer()
 function Combo()
     local target = GetTarget(E.range + Passive.radius)
-    if target == nil then return end
+	if target == nil then return end
 
     if IsValidTarget(target,W.radius + Passive.radius/2) and RepoKatarina.Combo.W:Value() and Ready(_W) then
-        Control.CastSpell(HK_W)
+		if Game.Timer() - lastR < 2.5 and HeroesAround(myHero.pos, R.range, 300 - myHero.team) ~= 0 then return end
+		Control.CastSpell(HK_W)
         lastW = Game.Timer()
     end
     
-    if IsValidTarget(target,Q.range) and RepoKatarina.Combo.Q:Value() and Ready(_Q) then
+	if IsValidTarget(target,Q.range) and RepoKatarina.Combo.Q:Value() and Ready(_Q) then
+		if Game.Timer() - lastR < 2.5 and HeroesAround(myHero.pos, R.range, 300 - myHero.team) ~= 0 then return end
         if GetDistance(myHero.pos,target.pos) < 500 then
             if myHero:GetSpellData(_W).level ~= 0 then
                 if Game.Timer() - lastW > 1.25 then
@@ -450,24 +404,8 @@ function Combo()
     end
 
     if IsValidTarget(target,E.range + Passive.radius) and RepoKatarina.Combo.E:Value() and Ready(_E) then
-        if RepoKatarina.Combo.Mode:Value() and (IsUnderTurret(target) or MinionsAround(target.pos, 550, 300 - myHero.team) >= 5 or PercentHP(myHero) <= PercentHP(target) + 15 ) then return end
-        for i = 1, #Dagger do
-            if GetDistance(myHero.pos,Dagger[i]) < E.range + W.radius then
-                local Edge = Vector(Dagger[i]) - Vector(Vector(Dagger[i]) - Vector(target.pos)):Normalized()*135
-                if GetDistance(target.pos,Dagger[i]) < W.radius + Passive.radius then
-                    if GetDistance(target.pos,Dagger[i]) < W.radius then
-                        Control.CastSpell(HK_E,Dagger[i])
-                    elseif GetDistance(target.pos,Dagger[i]) >= W.radius then
-                        Control.CastSpell(HK_E,Edge)
-                    end
-                elseif GetDistance(target.pos,Dagger[i]) >= W.radius + Passive.radius then
-                    if GetDistance(target.pos,Dagger[i]) < GetDistance(myHero.pos,target.pos) then
-                        Control.CastSpell(HK_E,Edge)
-                    end
-                end
-            end
-        end
-        if GetDistance(myHero.pos,target.pos) < E.range then
+       	if Game.Timer() - lastR < 2.5 and HeroesAround(myHero.pos, R.range, 300 - myHero.team) ~= 0 then return end
+		if GetDistance(myHero.pos,target.pos) < E.range then
             if myHero:GetSpellData(_Q).level ~= 0 then
                 if GetDistance(myHero.pos,target.pos) < Q.range then
                     if myHero:GetSpellData(_Q).currentCd >= 2 then
@@ -483,15 +421,61 @@ function Combo()
     end
 
     if IsValidTarget(target,R.range) and RepoKatarina.Combo.R:Value() and Game.CanUseSpell(_R) == 0 then
-        if RepoKatarina.Combo.Mode:Value() and IsUnderTurret(myHero) then return end
-        if (R.range - target.distance)/target.ms * Rdmg(target) >= target.health then
+		if Game.Timer() - lastR < 2.5 and HeroesAround(myHero.pos, R.range, 300 - myHero.team) ~= 0 then return end
+        if (R.range - target.distance)/target.ms * Rdmg(target) >= target.health and Rdmg(target) * 2.5 > target.health then
             EnableOrb(false)
-            Control.CastSpell(HK_R)
+			Control.CastSpell(HK_R)
+			lastR = Game.Timer()
 		end
 		if RepoKatarina.Combo.RAoE:Value() <= HeroesAround(myHero.pos, R.range, 300 - myHero.team) then
 			EnableOrb(false)
 			Control.CastSpell(HK_R)
+			lastR = Game.Timer()
 		end
+    end
+end
+
+function Harass()
+	local target = GetTarget(E.range + Passive.radius)
+	if target == nil then return end
+
+    if IsValidTarget(target,W.radius + Passive.radius/2) and RepoKatarina.Harass.W:Value() and Ready(_W) then
+		if Game.Timer() - lastR < 2.5 and HeroesAround(myHero.pos, R.range, 300 - myHero.team) ~= 0 then return end
+		Control.CastSpell(HK_W)
+        lastW = Game.Timer()
+    end
+    
+	if IsValidTarget(target,Q.range) and RepoKatarina.Harass.Q:Value() and Ready(_Q) then
+		if Game.Timer() - lastR < 2.5 and HeroesAround(myHero.pos, R.range, 300 - myHero.team) ~= 0 then return end
+        if GetDistance(myHero.pos,target.pos) < 500 then
+            if myHero:GetSpellData(_W).level ~= 0 then
+                if Game.Timer() - lastW > 1.25 then
+                    Control.CastSpell(HK_Q,target)
+                end
+            else
+                Control.CastSpell(HK_Q,target)
+            end
+        else
+            Control.CastSpell(HK_Q,target)
+        end
+    end
+
+    if IsValidTarget(target,E.range + Passive.radius) and RepoKatarina.Harass.E:Value() and Ready(_E) then
+        if IsUnderTurret(target) or MinionsAround(target.pos, 550, 300 - myHero.team) >= RepoKatarina.Harass.X:Value() or PercentHP(myHero) <= PercentHP(target) + 15 then return end
+		if Game.Timer() - lastR < 2.5 and HeroesAround(myHero.pos, R.range, 300 - myHero.team) ~= 0 then return end
+		if GetDistance(myHero.pos,target.pos) < E.range then
+            if myHero:GetSpellData(_Q).level ~= 0 then
+                if GetDistance(myHero.pos,target.pos) < Q.range then
+                    if myHero:GetSpellData(_Q).currentCd >= 2 then
+                        Control.CastSpell(HK_E,target)
+                    end
+                elseif GetDistance(myHero.pos,target.pos) > Q.range then
+                    Control.CastSpell(HK_E,target)
+                end
+            else
+                Control.CastSpell(HK_E,target)
+            end
+        end
     end
 end
 
@@ -501,10 +485,10 @@ function Lane()
 		local minion = Game.Minion(i)
 		if minion then
 			if minion.team == 300 - myHero.team then
-				if IsValidTarget(minion,Q.range) and RepoKatarina.Clear.Q:Value() and Ready(_Q) and MinionsAround(minion.pos, 400, 300 - myHero.team) >= 3 then
+				if IsValidTarget(minion,Q.range) and RepoKatarina.Clear.Q:Value() and Ready(_Q) and MinionsAround(minion.pos, 300, 300 - myHero.team) >= RepoKatarina.Clear.QX:Value() then
 					Control.CastSpell(HK_Q,minion)
 				end
-				if RepoKatarina.Clear.W:Value() and Ready(_W) and MinionsAround(myHero.pos, Passive.radius, 300 - myHero.team) >= 4 then
+				if RepoKatarina.Clear.W:Value() and Ready(_W) and MinionsAround(myHero.pos, Passive.radius, 300 - myHero.team) >= RepoKatarina.Clear.WX:Value() then
 					Control.CastSpell(HK_W)
 				end
 			end
@@ -523,6 +507,34 @@ function Lane()
 	end
 end
 
+function Killsteal()
+    local target = GetTarget(E.range)
+	if target == nil then return end
+    
+	if IsValidTarget(target,Q.range) and RepoKatarina.Killsteal.Q:Value() and Ready(_Q) then
+		if Game.Timer() - lastR < 2.5 and HeroesAround(myHero.pos, R.range, 300 - myHero.team) ~= 0 then return end
+        if Qdmg(target) > target.health then
+            Control.CastSpell(HK_Q,target)
+        end
+    end
+
+    if IsValidTarget(target,E.range) and RepoKatarina.Killsteal.E:Value() and Ready(_E) then
+       	if Game.Timer() - lastR < 2.5 and HeroesAround(myHero.pos, R.range, 300 - myHero.team) ~= 0 then return end
+		if Edmg(target) > target.health then
+			Control.CastSpell(HK_E,target)
+        end
+    end
+
+    if IsValidTarget(target,R.range) and RepoKatarina.Killsteal.R:Value() and Game.CanUseSpell(_R) == 0 then
+		if Game.Timer() - lastR < 2.5 and HeroesAround(myHero.pos, R.range, 300 - myHero.team) ~= 0 then return end
+        if (R.range - target.distance)/target.ms * Rdmg(target) >= target.health and Rdmg(target) * 2.5 > target.health then
+            EnableOrb(false)
+			Control.CastSpell(HK_R)
+			lastR = Game.Timer()
+		end
+    end
+end
+
 function Activator()
 	local target = GetTarget(E.range + Passive.radius)
 	local items = {}
@@ -536,13 +548,13 @@ function Activator()
     if target == nil then return end
         local HG = items[3146]
         if HG and myHero:GetSpellData(HG).currentCd == 0 and RepoKatarina.Combo.HG:Value() and GetDistance(myHero.pos,target.pos) < R.range then
-            if Game.CanUseSpell(_R) == 0 and (R.range - target.distance)/(0.6 * target.ms) * Rdmg(target) + HGdmg(target) >= target.health then
+            if Game.CanUseSpell(_R) == 0 and (R.range - target.distance)/(0.6 * target.ms) * Rdmg(target) + HGdmg(target) >= target.health and Rdmg(target) * 2.5 + HGdmg(target) >= target.health then
                 Control.CastSpell(HKITEM[HG], target)
             end
         end
         local BC = items[3144]
         if BC and myHero:GetSpellData(BC).currentCd == 0 and RepoKatarina.Combo.HG:Value() and GetDistance(myHero.pos,target.pos) < R.range then
-            if Game.CanUseSpell(_R) == 0 and (R.range - target.distance)/(0.75 * target.ms) * Rdmg(target) + BCdmg(target) >= target.health then
+            if Game.CanUseSpell(_R) == 0 and (R.range - target.distance)/(0.75 * target.ms) * Rdmg(target) + BCdmg(target) >= target.health and Rdmg(target) * 2.5 + BCdmg(target) >= target.health then
                 Control.CastSpell(HKITEM[BC], target)
             end
         end
@@ -550,10 +562,10 @@ function Activator()
 		or myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" then
 			if RepoKatarina.Combo.IG:Value() then
 				local IgDamage = (R.range - target.distance)/target.ms * Rdmg(target) + IGdmg(target)
-				if myHero:GetSpellData(SUMMONER_1).name == "SummonerDot" and Ready(SUMMONER_1) and IgDamage > target.health
+				if myHero:GetSpellData(SUMMONER_1).name == "SummonerDot" and Ready(SUMMONER_1) and IgDamage > target.health and Rdmg(target) * 2.5 + IGdmg(target) >= target.health 
 				and Game.CanUseSpell(_R) == 0 then
 					Control.CastSpell(HK_SUMMONER_1, target)
-				elseif myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" and Ready(SUMMONER_2) and IgDamage > target.health
+				elseif myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" and Ready(SUMMONER_2) and IgDamage > target.health and Rdmg(target) * 2.5 + IGdmg(target) >= target.health 
 				and Game.CanUseSpell(_R) == 0 then
 					Control.CastSpell(HK_SUMMONER_2, target)
 				end
@@ -563,10 +575,10 @@ function Activator()
 		or myHero:GetSpellData(SUMMONER_2).name == "SummonerExhaust" then
 			if RepoKatarina.Combo.EX:Value() then
 				local Damage = (R.range - target.distance)/(0.7 * target.ms) * Rdmg(target)
-				if myHero:GetSpellData(SUMMONER_1).name == "SummonerExhaust" and Ready(SUMMONER_1) and Damage > target.health
+				if myHero:GetSpellData(SUMMONER_1).name == "SummonerExhaust" and Ready(SUMMONER_1) and Damage > target.health and Rdmg(target) * 2.5 >= target.health 
 				and Game.CanUseSpell(_R) == 0 then
 					Control.CastSpell(HK_SUMMONER_1, target)
-				elseif myHero:GetSpellData(SUMMONER_2).name == "SummonerExhaust" and Ready(SUMMONER_2) and Damage > target.health
+				elseif myHero:GetSpellData(SUMMONER_2).name == "SummonerExhaust" and Ready(SUMMONER_2) and Damage > target.health and Rdmg(target) * 2.5 >= target.health 
 				and Game.CanUseSpell(_R) == 0 then
 					Control.CastSpell(HK_SUMMONER_2, target)
 				end
@@ -775,11 +787,6 @@ function Drawings()
 	if RepoKatarina.Draw.R:Value() and Ready(_R) then Draw.Circle(myHero.pos, R.range, 3,  Draw.Color(255, 246, 000, 255)) end
 	if RepoKatarina.Draw.C:Value() then
 		local textPos = myHero.pos:To2D()
-		if RepoKatarina.Combo.Mode:Value() then
-			Draw.Text("SAFE MODE", 20, textPos.x - 57, textPos.y + 60, Draw.Color(255, 000, 255, 000)) 
-		else
-			Draw.Text("TRYHARD MODE", 20, textPos.x - 57, textPos.y + 60, Draw.Color(255, 225, 000, 000)) 
-		end
 		if RepoKatarina.Clear.Key:Value() then
 			Draw.Text("CLEAR ENABLED", 20, textPos.x - 57, textPos.y + 40, Draw.Color(255, 000, 255, 000)) 
 		else
