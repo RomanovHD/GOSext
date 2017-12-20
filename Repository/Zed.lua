@@ -372,9 +372,6 @@ Callback.Add("Tick", function() Tick() end)
 Callback.Add("Draw", function() Drawings() end)
 
 function Tick()
-	if myHero:GetSpellData(_W).toggleState == 0 then
-		_shadowPos = myHero.pos
-	end
 	local Mode = GetMode()
 	if Mode == "Combo" then
 		Combo()
@@ -385,7 +382,7 @@ function Tick()
 	end
 	Activator()
 	Activator2()
-    AutoLevel()
+	AutoLevel()
 end
 
 local _EnemyHeroes
@@ -538,7 +535,7 @@ function CastW(target)
         if (Game.Timer() - OnWaypoint(target).time < 0.15 or Game.Timer() - OnWaypoint(target).time > 1.0) then
             local wPred = GetPred(target,W.speed,W.delay + Game.Latency()/1000)
 			CastSpell(HK_W,wPred,W.range + 200,250)
-			_shadowPos = target.pos
+			_shadowPos = wPred
         end
 	end
 end
@@ -555,12 +552,13 @@ function Combo()
 		CastW(target)
 	end
 	if RepoZed.Combo.E:Value() and Ready(_E) then
-		if HeroesAround(_shadowPos, 290, 300 - myHero.team) >= 1 
+		if (HeroesAround(_shadowPos, 290, 300 - myHero.team) >= 1 and myHero:GetSpellData(_W).toggleState == 2)
 		or HeroesAround(myHero.pos, 290, 300 - myHero.team) >= 1 then
 			Control.CastSpell(HK_E)
 		end
 	end
 	if myHero:GetSpellData(_W).toggleState == 2 and GetDistance(_shadowPos,target.pos) < GetDistance(myHero.pos,target.pos) then
+		_shadowPos = myHero.pos
 		Control.CastSpell(HK_W)
 	end
 	if IsValidTarget(target,Q.range + W.range) and RepoZed.Combo.Q:Value() and Ready(_Q) then
@@ -587,7 +585,7 @@ function Harass()
 		CastW(target)
 	end
 	if RepoZed.Harass.E:Value() and Ready(_E) then
-		if HeroesAround(_shadowPos, 290, 300 - myHero.team) >= 1 
+		if (HeroesAround(_shadowPos, 290, 300 - myHero.team) >= 1 and myHero:GetSpellData(_W).toggleState == 2)
 		or HeroesAround(myHero.pos, 290, 300 - myHero.team) >= 1 then
 			Control.CastSpell(HK_E)
 		end
@@ -617,7 +615,7 @@ function Lane()
 					CastW(minion)
 				end
 				if RepoZed.Clear.E:Value() and Ready(_E) then
-					if MinionsAround(_shadowPos, 290, 300 - myHero.team) >= RepoZed.Clear.EX:Value() 
+					if (HeroesAround(_shadowPos, 290, 300 - myHero.team) >= RepoZed.Clear.EX:Value() and myHero:GetSpellData(_W).toggleState == 2)
 					or MinionsAround(myHero.pos, 290, 300 - myHero.team) >= RepoZed.Clear.EX:Value() then
 						Control.CastSpell(HK_E)
 					end
@@ -907,7 +905,7 @@ function Drawings()
 			Draw.Text("CLEAR DISABLED", 20, textPos.x - 57, textPos.y + 40, Draw.Color(255, 225, 000, 000)) 
 		end
 	end
-
+	
 	if RepoZed.Draw.D:Value() then
 		for i = 1, Game.HeroCount() do
 			local enemy = Game.Hero(i)
