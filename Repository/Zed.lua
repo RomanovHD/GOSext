@@ -25,16 +25,6 @@ local function IsImmune(unit)
     return false
 end
 
-local function HasBuff(unit,name)
-    for i = 0, unit.buffCount do
-		local buff = unit:GetBuff(i)
-        if buff.name == name then
-            return true
-        end
-    end
-    return false
-end
-
 local sqrt = math.sqrt
 
 local function GetDistanceSqr(p1, p2)
@@ -263,9 +253,9 @@ local function EnableOrb(bool)
 	end
 end
 
-local RepoZed = MenuElement({type = MENU, id = "RepoZed", name = "Romanov's Repository 7.24", leftIcon = "https://raw.githubusercontent.com/RomanovHD/GOSext/master/Repository/Screenshot_1.png"})
+local RepoZed = MenuElement({type = MENU, id = "RepoZed", name = "Roman Repo 7.24", leftIcon = "https://raw.githubusercontent.com/RomanovHD/GOSext/master/Repository/Screenshot_1.png"})
 
-RepoZed:MenuElement({id = "Me", name = "Zed", drop = {"v1.0"}})
+RepoZed:MenuElement({id = "Me", name = "Zed", drop = {"v4.0"}})
 RepoZed:MenuElement({id = "Core", name = " ", drop = {"Champion Core"}})
 RepoZed:MenuElement({id = "Combo", name = "Combo", type = MENU})
 	RepoZed.Combo:MenuElement({id = "Q", name = "Q - Razor Shuriken", value = true})
@@ -280,13 +270,21 @@ RepoZed:MenuElement({id = "Combo", name = "Combo", type = MENU})
 	if myHero:GetSpellData(SUMMONER_1).name == "SummonerExhaust"
 	or myHero:GetSpellData(SUMMONER_2).name == "SummonerExhaust" then
 		RepoZed.Combo:MenuElement({id = "EX", name = "Spell - Exhaust", value = true})
-	end	
-	RepoZed.Combo:MenuElement({id = "Mode", name = "Safe/Tryhard", key = string.byte("S"), toggle = true})
+	end
+
+RepoZed:MenuElement({id = "Harass", name = "Harass", type = MENU})
+	RepoZed.Harass:MenuElement({id = "Q", name = "Q - Razor Shuriken", value = true})
+	RepoZed.Harass:MenuElement({id = "W", name = "W - Living Shadow", value = true})
+	RepoZed.Harass:MenuElement({id = "E", name = "E - Shadow Slash", value = true})
+	RepoZed.Harass:MenuElement({id = "MP", name = "Min energy", value = 35, min = 0, max = 100})
 
 RepoZed:MenuElement({id = "Clear", name = "Clear", type = MENU})
 	RepoZed.Clear:MenuElement({id = "Q", name = "Q - Razor Shuriken", value = true})
 	RepoZed.Clear:MenuElement({id = "W", name = "W - Living Shadow", value = true})
+	RepoZed.Clear:MenuElement({id = "WX", name = "Minions [for lane]", value = 5, min = 1, max = 7})
 	RepoZed.Clear:MenuElement({id = "E", name = "E - Shadow Slash", value = true})
+	RepoZed.Clear:MenuElement({id = "EX", name = "Minions [for lane]", value = 5, min = 1, max = 7})
+	RepoZed.Clear:MenuElement({id = "MP", name = "Min energy", value = 35, min = 0, max = 100})
 	RepoZed.Clear:MenuElement({id = "Key", name = "Enable/Disable", key = string.byte("A"), toggle = true})
 
 RepoZed:MenuElement({id = "Utility", name = " ", drop = {"Champion Utility"}})
@@ -380,6 +378,8 @@ function Tick()
 	local Mode = GetMode()
 	if Mode == "Combo" then
 		Combo()
+	elseif Mode == "Harass" then
+		Harass()
 	elseif Mode == "Clear" then
 		Lane()
 	end
@@ -546,88 +546,90 @@ end
 function Combo()
     local target = GetTarget(Q.range + W.range)
     if target == nil then return end
-
-    if RepoZed.Combo.Mode:Value() then
-		if IsValidTarget(target,W.range + E.range) and RepoZed.Combo.W:Value() and Ready(_W) and myHero:GetSpellData(_W).toggleState == 0 then
-			if not Ready(_Q) and not Ready(_E) then return end
-			CastW(target)
-		end
-		if IsValidTarget(target,W.range) and RepoZed.Combo.E:Value() and Ready(_E) and myHero:GetSpellData(_W).name == "ZedW2" then
-			Control.CastSpell(HK_E)
-		end
-        if IsValidTarget(target,Q.range) and RepoZed.Combo.Q:Value() and Ready(_Q) then
-			if Ready(_W) and myHero:GetSpellData(_W).toggleState == 0 then return end
-			if GetDistance(target.pos,_shadowPos) >= GetDistance(target.pos,myHero.pos) then
-				if GetDistance(target.pos,myHero.pos) <= Q.range then
-					CastQ(target,myHero.pos)
-				end
-			else
-				if GetDistance(target.pos,_shadowPos) <= Q.range then
-					CastQ(target,_shadowPos)
-				end
-			end
-		end
-    end
     
-    if not RepoZed.Combo.Mode:Value() then
-        if IsValidTarget(target,R.range) and Ready(_R) and RepoZed.Combo.R:Value() and Passivedmg(target) + ELdmg(target) + ComboAA(target) + Qdmg(target) + Edmg(target) + IGdmg(target) + BOTRKdmg(target) + Rdmg(target) > target.health and myHero:GetSpellData(_R).toggleState == 0 then
-            Control.CastSpell(HK_R,target)
-        end
-		if IsValidTarget(target,W.range + E.range) and RepoZed.Combo.W:Value() and Ready(_W) and myHero:GetSpellData(_W).toggleState == 0 then
-			if not Ready(_Q) and not Ready(_E) then return end
-			CastW(target)
-		end
-		if IsValidTarget(target,W.range) and RepoZed.Combo.E:Value() and Ready(_E) and myHero:GetSpellData(_W).name == "ZedW2" then
-			Control.CastSpell(HK_E)
-		end
-		if myHero:GetSpellData(_W).toggleState == 2 and GetDistance(_shadowPos,target.pos) < GetDistance(myHero.pos,target.pos) then
-            Control.CastSpell(HK_W)
-        end
-        if IsValidTarget(target,Q.range + W.range) and RepoZed.Combo.Q:Value() and Ready(_Q) then
-			if Ready(_W) and myHero:GetSpellData(_W).toggleState == 0 then return end
-			if GetDistance(target.pos,_shadowPos) >= GetDistance(target.pos,myHero.pos) then
-				if GetDistance(target.pos,myHero.pos) <= Q.range then
-					CastQ(target,myHero.pos)
-				end
-			else
-				if GetDistance(target.pos,_shadowPos) <= Q.range then
-					CastQ(target,_shadowPos)
-				end
-			end
-		end
+    if IsValidTarget(target,R.range) and Ready(_R) and RepoZed.Combo.R:Value() and Passivedmg(target) + ELdmg(target) + ComboAA(target) + Qdmg(target) + Edmg(target) + IGdmg(target) + BOTRKdmg(target) + Rdmg(target) > target.health and myHero:GetSpellData(_R).toggleState == 0 then
+		Control.CastSpell(HK_R,target)
 	end
-
+	if IsValidTarget(target,W.range + E.range) and RepoZed.Combo.W:Value() and Ready(_W) and myHero:GetSpellData(_W).toggleState == 0 then
+		if not Ready(_Q) and not Ready(_E) then return end
+		CastW(target)
+	end
 	if RepoZed.Combo.E:Value() and Ready(_E) then
 		if HeroesAround(_shadowPos, 290, 300 - myHero.team) >= 1 
 		or HeroesAround(myHero.pos, 290, 300 - myHero.team) >= 1 then
 			Control.CastSpell(HK_E)
 		end
 	end
+	if myHero:GetSpellData(_W).toggleState == 2 and GetDistance(_shadowPos,target.pos) < GetDistance(myHero.pos,target.pos) then
+		Control.CastSpell(HK_W)
+	end
+	if IsValidTarget(target,Q.range + W.range) and RepoZed.Combo.Q:Value() and Ready(_Q) then
+		if Ready(_W) and myHero:GetSpellData(_W).toggleState == 0 then return end
+		if GetDistance(target.pos,_shadowPos) >= GetDistance(target.pos,myHero.pos) then
+			if GetDistance(target.pos,myHero.pos) <= Q.range then
+				CastQ(target,myHero.pos)
+			end
+		else
+			if GetDistance(target.pos,_shadowPos) <= Q.range then
+				CastQ(target,_shadowPos)
+			end
+		end
+	end
+end
+
+function Harass()
+	local target = GetTarget(Q.range + W.range)
+	if target == nil then return end
+	if myHero.mana < RepoZed.Harass.MP:Value() * 2 then return end
+
+	if IsValidTarget(target,W.range + E.range) and RepoZed.Harass.W:Value() and Ready(_W) and myHero:GetSpellData(_W).toggleState == 0 then
+		if not Ready(_Q) and not Ready(_E) then return end
+		CastW(target)
+	end
+	if RepoZed.Harass.E:Value() and Ready(_E) then
+		if HeroesAround(_shadowPos, 290, 300 - myHero.team) >= 1 
+		or HeroesAround(myHero.pos, 290, 300 - myHero.team) >= 1 then
+			Control.CastSpell(HK_E)
+		end
+	end
+	if IsValidTarget(target,Q.range) and RepoZed.Harass.Q:Value() and Ready(_Q) then
+		if Ready(_W) and myHero:GetSpellData(_W).toggleState == 0 then return end
+		if GetDistance(target.pos,_shadowPos) >= GetDistance(target.pos,myHero.pos) then
+			if GetDistance(target.pos,myHero.pos) <= Q.range then
+				CastQ(target,myHero.pos)
+			end
+		else
+			if GetDistance(target.pos,_shadowPos) <= Q.range then
+				CastQ(target,_shadowPos)
+			end
+		end
+	end
 end
 
 function Lane()
 	if RepoZed.Clear.Key:Value() == false then return end
+	if myHero.mana < RepoZed.Clear.MP:Value() * 2 then return end
 	for i = 1, Game.MinionCount() do
 		local minion = Game.Minion(i)
 		if minion then
 			if minion.team == 300 - myHero.team then
-				if IsValidTarget(minion,W.range) and RepoZed.Clear.W:Value() and Ready(_W) and MinionsAround(minion.pos, 290, 300 - myHero.team) >= 5 and myHero:GetSpellData(_W).toggleState == 0 then
+				if IsValidTarget(minion,W.range) and RepoZed.Clear.W:Value() and Ready(_W) and MinionsAround(minion.pos, 290, 300 - myHero.team) >= RepoZed.Clear.WX:Value() and myHero:GetSpellData(_W).toggleState == 0 then
 					CastW(minion)
 				end
 				if RepoZed.Clear.E:Value() and Ready(_E) then
-					if MinionsAround(_shadowPos, 290, 300 - myHero.team) >= 3 
-					or MinionsAround(myHero.pos, 290, 300 - myHero.team) >= 3 then
+					if MinionsAround(_shadowPos, 290, 300 - myHero.team) >= RepoZed.Clear.EX:Value() 
+					or MinionsAround(myHero.pos, 290, 300 - myHero.team) >= RepoZed.Clear.EX:Value() then
 						Control.CastSpell(HK_E)
 					end
 				end
 				if IsValidTarget(minion,W.range + Q.range) and RepoZed.Clear.Q:Value() and Ready(_Q) then
 					if GetDistance(minion.pos,_shadowPos) >= GetDistance(minion.pos,myHero.pos) then
 						if GetDistance(minion.pos,myHero.pos) <= Q.range then
-							CastQ(minion,myHero.pos)
+							CastQ(minion,_shadowPos)
 						end
 					else
 						if GetDistance(minion.pos,_shadowPos) <= Q.range then
-							CastQ(minion,_shadowPos)
+							CastQ(minion,myHero.pos)
 						end
 					end
 				end
@@ -645,11 +647,11 @@ function Lane()
 				if IsValidTarget(minion,W.range + Q.range) and RepoZed.Clear.Q:Value() and Ready(_Q) then
 					if GetDistance(minion.pos,_shadowPos) >= GetDistance(minion.pos,myHero.pos) then
 						if GetDistance(minion.pos,myHero.pos) <= Q.range then
-							CastQ(minion,myHero.pos)
+							CastQ(minion,_shadowPos)
 						end
 					else
 						if GetDistance(minion.pos,_shadowPos) <= Q.range then
-							CastQ(minion,_shadowPos)
+							CastQ(minion,myHero.pos)
 						end
 					end
 				end
@@ -899,11 +901,6 @@ function Drawings()
 	if RepoZed.Draw.R:Value() and Ready(_R) then Draw.Circle(myHero.pos, R.range, 3,  Draw.Color(255, 246, 000, 255)) end
 	if RepoZed.Draw.C:Value() then
 		local textPos = myHero.pos:To2D()
-		if RepoZed.Combo.Mode:Value() then
-			Draw.Text("SAFE MODE", 20, textPos.x - 57, textPos.y + 60, Draw.Color(255, 000, 255, 000)) 
-		else
-			Draw.Text("TRYHARD MODE", 20, textPos.x - 57, textPos.y + 60, Draw.Color(255, 225, 000, 000)) 
-		end
 		if RepoZed.Clear.Key:Value() then
 			Draw.Text("CLEAR ENABLED", 20, textPos.x - 57, textPos.y + 40, Draw.Color(255, 000, 255, 000)) 
 		else
