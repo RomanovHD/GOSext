@@ -556,7 +556,7 @@ function Lane()
         if GetDistance(myHero.pos,minion.pos) < myHero.range and Buffed() then return end
 			if minion.team == 300 - myHero.team then
 				if IsValidTarget(minion,Q.range) and minion:GetCollision(Q.width, Q.speed, Q.delay) == 0 and RepoLeesin.Clear.Q:Value() and Ready(_Q) and myHero:GetSpellData(_Q).name == "BlindMonkQOne" and Qdmg(minion) + Q2dmg(minion) > minion.health then
-                    Control.CastSpell(HK_Q, minion)
+                    Control.CastSpell(HK_Q, minion.pos)
                 end
                 if IsValidTarget(minion,Q.range) and RepoLeesin.Clear.Q:Value() and Ready(_Q) and myHero:GetSpellData(_Q).name == "BlindMonkQTwo" then
                     Control.CastSpell(HK_Q)
@@ -576,7 +576,7 @@ function Lane()
 			end
 			if minion.team == 300 then
 				if IsValidTarget(minion,Q.range) and minion:GetCollision(Q.width, Q.speed, Q.delay) == 0 and RepoLeesin.Clear.Q:Value() and Ready(_Q) and myHero:GetSpellData(_Q).name == "BlindMonkQOne" then
-                    Control.CastSpell(HK_Q, minion)
+                    Control.CastSpell(HK_Q, minion.pos)
                 end
                 if IsValidTarget(minion,Q.range) and RepoLeesin.Clear.Q:Value() and Ready(_Q) and myHero:GetSpellData(_Q).name == "BlindMonkQTwo" then
                     Control.CastSpell(HK_Q)
