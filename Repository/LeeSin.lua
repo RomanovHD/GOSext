@@ -328,7 +328,6 @@ RepoLeesin:MenuElement({id = "Draw", name = "Drawings", type = MENU})
     RepoLeesin.Draw:MenuElement({id = "E", name = "E - Tempest", value = true})
     RepoLeesin.Draw:MenuElement({id = "R", name = "R - Dragon's Rage", value = true})
     RepoLeesin.Draw:MenuElement({id = "C", name = "Enable Text", value = true})
-    RepoLeesin.Draw:MenuElement({id = "D", name = "Damage by %", value = true})
 
 Callback.Add("Tick", function() Tick() end)
 Callback.Add("Draw", function() Drawings() end)
