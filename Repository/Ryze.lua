@@ -482,13 +482,13 @@ function Harass()
 	local target = GetTarget(Q.range)
 	if target == nil then return end
     
-	if IsValidTarget(target,E.range) and RepoRyze.Harass.E:Value() and Ready(_E) then
+	if IsValidTarget(target,E.range) and RepoRyze.Harass.E:Value() and Ready(_E) and myHero.hudAmmo ~= 2 then
 		Control.CastSpell(HK_E, target)
     end
-    if IsValidTarget(target,W.range) and RepoRyze.Harass.W:Value() and Ready(_W) then
+    if IsValidTarget(target,W.range) and RepoRyze.Harass.W:Value() and Ready(_W) and myHero.hudAmmo ~= 2 then
 		Control.CastSpell(HK_W, target)
     end
-    if IsValidTarget(target,Q.range) and RepoRyze.Harass.Q:Value() and Ready(_Q) then
+    if IsValidTarget(target,Q.range) and RepoRyze.Harass.Q:Value() and Ready(_Q) and myHero.hudAmmo == 2 then
 		CastQ(target)
 	end
 end
