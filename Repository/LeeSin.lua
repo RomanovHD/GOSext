@@ -246,6 +246,9 @@ RepoLeesin:MenuElement({id = "Killsteal", name = "Killsteal", type = MENU})
     RepoLeesin.Killsteal:MenuElement({id = "E", name = "E - Tempest", value = true})
 	RepoLeesin.Killsteal:MenuElement({id = "R", name = "R - Dragon's Rage", value = true})
 
+RepoLeesin:MenuElement({id = "Flee", name = "Flee", type = MENU})
+    RepoLeesin.Flee:MenuElement({id = "W", name = "W - Safeguard", value = true})
+
 RepoLeesin:MenuElement({id = "Utility", name = " ", drop = {"Champion Utility"}})
 RepoLeesin:MenuElement({id = "Leveler", name = "Auto Leveler", type = MENU})
     RepoLeesin.Leveler:MenuElement({id = "Enabled", name = "Enable", value = true})
@@ -338,6 +341,8 @@ function Tick()
 		Harass()
 	elseif Mode == "Clear" then
 		Lane()
+	elseif Mode == "Flee" then
+		Flee()
     end
     Killsteal()
 	Activator2()
@@ -611,44 +616,51 @@ function Killsteal()
     end
 end
 
-function Activator()
-	local target = GetTarget(W.range + Q.range)
-	local items = {}
-	for slot = ITEM_1,ITEM_6 do
-		local id = myHero:GetItemData(slot).itemID 
-		if id > 0 then
-			items[id] = slot
-		end
-    end
-    if GetMode() == "Combo" then
-    if target == nil then return end
-        local BOTRK = items[3144] or items[3146]
-        if BOTRK and myHero:GetSpellData(BOTRK).currentCd == 0 and RepoLeesin.Combo.BOTRK:Value() and GetDistance(myHero.pos,target.pos) < 550 then
-            if myHero:GetSpellData(_R).toggleState ~= 0 then
-                Control.CastSpell(HKITEM[BOTRK], target)
-            end
-        end
-        if (myHero:GetSpellData(SUMMONER_1).name == "SummonerDot" and Ready(SUMMONER_1))
-		or (myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" and Ready(SUMMONER_2)) then
-			if RepoLeesin.Combo.IG:Value() and myHero:GetSpellData(_R).toggleState ~= 0 then
-				if myHero:GetSpellData(SUMMONER_1).name == "SummonerDot" and Ready(SUMMONER_1) then
-					Control.CastSpell(HK_SUMMONER_1, target)
-				elseif myHero:GetSpellData(SUMMONER_2).name == "SummonerDot" and Ready(SUMMONER_2) then
-					Control.CastSpell(HK_SUMMONER_2, target)
-				end
+function GetFleeMinion(range,team)
+	local best = nil
+	local closest = math.huge
+	for i = 1, Game.MinionCount() do
+		local m = Game.Minion(i)
+		if m.team == team and GetDistance(myHero.pos,m.pos) < range then
+			local DistanceM = GetDistance(myHero.pos, mousePos)
+			local DistanceP = GetDistance(myHero.pos + (m.pos - myHero.pos):Normalized() * 400, mousePos)
+			local DistanceC = GetDistance(myHero.pos + (m.pos - myHero.pos):Normalized() * 700, myHero.pos)
+			if DistanceP < DistanceM and DistanceC < closest then
+				best = m
+				closest = DistanceC
 			end
 		end
-		if myHero:GetSpellData(SUMMONER_1).name == "SummonerExhaust"
-		or myHero:GetSpellData(SUMMONER_2).name == "SummonerExhaust" then
-			if RepoLeesin.Combo.EX:Value() and myHero:GetSpellData(_R).toggleState ~= 0 then
-				if myHero:GetSpellData(SUMMONER_1).name == "SummonerExhaust" and Ready(SUMMONER_1) then
-					Control.CastSpell(HK_SUMMONER_1, target)
-				elseif myHero:GetSpellData(SUMMONER_2).name == "SummonerExhaust" and Ready(SUMMONER_2) then
-					Control.CastSpell(HK_SUMMONER_2, target)
-				end
+	end
+	return best
+end
+
+function GetFleeHero(range)
+	local best = nil
+	local closest = math.huge
+	for i = 1, Game.HeroCount() do
+		local m = Game.Hero(i)
+		if m.team == myHero.team and GetDistance(myHero.pos,m.pos) < range then
+			local DistanceM = GetDistance(myHero.pos, mousePos)
+			local DistanceP = GetDistance(myHero.pos + (m.pos - myHero.pos):Normalized() * 400, mousePos)
+			local DistanceC = GetDistance(myHero.pos + (m.pos - myHero.pos):Normalized() * 700, myHero.pos)
+			if DistanceP < DistanceM and DistanceC < closest then
+				best = m
+				closest = DistanceC
 			end
 		end
-    end
+	end
+	return best
+end
+
+function Flee()
+	local Wally = GetFleeHero(W.range)
+	local Wminion = GetFleeMinion(W.range,myHero.team)
+	if RepoLeesin.Flee.W:Value() and Ready(_W) and myHero:GetSpellData(_W).name == "BlindMonkWOne" and Wally then
+		Control.CastSpell(HK_W, Wally.pos)
+	end
+	if RepoLeesin.Flee.W:Value() and Ready(_W) and myHero:GetSpellData(_W).name == "BlindMonkWOne" and Wminion then
+		Control.CastSpell(HK_W, Wminion.pos)
+	end
 end
 
 function Activator2()
