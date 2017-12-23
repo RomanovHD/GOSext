@@ -232,6 +232,10 @@ RepoKatarina:MenuElement({id = "Killsteal", name = "Killsteal", type = MENU})
 	RepoKatarina.Killsteal:MenuElement({id = "E", name = "E - Shunpo", value = true})
 	RepoKatarina.Killsteal:MenuElement({id = "R", name = "R - Death Lotus", value = true})
 
+RepoKatarina:MenuElement({id = "Flee", name = "Flee", type = MENU})
+    RepoKatarina.Flee:MenuElement({id = "W", name = "W - Preparation", value = true})
+	RepoKatarina.Flee:MenuElement({id = "E", name = "E - Shunpo", value = true})
+
 RepoKatarina:MenuElement({id = "Utility", name = " ", drop = {"Champion Utility"}})
 RepoKatarina:MenuElement({id = "Leveler", name = "Auto Leveler", type = MENU})
     RepoKatarina.Leveler:MenuElement({id = "Enabled", name = "Enable", value = true})
@@ -310,7 +314,6 @@ RepoKatarina:MenuElement({id = "Draw", name = "Drawings", type = MENU})
     RepoKatarina.Draw:MenuElement({id = "E", name = "E - Shunpo", value = true})
     RepoKatarina.Draw:MenuElement({id = "R", name = "R - Death Lotus", value = true})
     RepoKatarina.Draw:MenuElement({id = "C", name = "Enable Text", value = true})
-    RepoKatarina.Draw:MenuElement({id = "D", name = "Damage by %", value = true})
 
 Callback.Add("Tick", function() Tick() end)
 Callback.Add("Draw", function() Drawings() end)
@@ -323,6 +326,8 @@ function Tick()
 		Harass()
 	elseif Mode == "Clear" then
 		Lane()
+	elseif Mode == "Flee" then
+		Flee()
 	end
 	Killsteal()
 	Activator()
@@ -533,6 +538,57 @@ function Killsteal()
 			lastR = Game.Timer()
 		end
     end
+end
+
+function GetFleeMinion(range,team)
+	local best = nil
+	local closest = math.huge
+	for i = 1, Game.MinionCount() do
+		local m = Game.Minion(i)
+		if m.team == team and GetDistance(myHero.pos,m.pos) < range then
+			local DistanceM = GetDistance(myHero.pos, mousePos)
+			local DistanceP = GetDistance(myHero.pos + (m.pos - myHero.pos):Normalized() * 400, mousePos)
+			local DistanceC = GetDistance(myHero.pos + (m.pos - myHero.pos):Normalized() * 700, myHero.pos)
+			if DistanceP < DistanceM and DistanceC < closest then
+				best = m
+				closest = DistanceC
+			end
+		end
+	end
+	return best
+end
+
+function GetFleeHero(range)
+	local best = nil
+	local closest = math.huge
+	for i = 1, Game.HeroCount() do
+		local m = Game.Hero(i)
+		if m.team == myHero.team and GetDistance(myHero.pos,m.pos) < range then
+			local DistanceM = GetDistance(myHero.pos, mousePos)
+			local DistanceP = GetDistance(myHero.pos + (m.pos - myHero.pos):Normalized() * 400, mousePos)
+			local DistanceC = GetDistance(myHero.pos + (m.pos - myHero.pos):Normalized() * 700, myHero.pos)
+			if DistanceP < DistanceM and DistanceC < closest then
+				best = m
+				closest = DistanceC
+			end
+		end
+	end
+	return best
+end
+
+function Flee()
+	local Eally = GetFleeHero(E.range)
+	local Eminion = GetFleeMinion(E.range,myHero.team)
+	if RepoKatarina.Flee.E:Value() and Ready(_E) and Eally then
+		Control.CastSpell(HK_E, Eally.pos)
+	end
+	if RepoKatarina.Flee.E:Value() and Ready(_E) and Eminion then
+		Control.CastSpell(HK_E, Eminion.pos)
+	end
+
+	if RepoKatarina.Flee.W:Value() and Ready(_W) then
+		Control.CastSpell(HK_W)
+	end
 end
 
 function Activator()
@@ -791,26 +847,6 @@ function Drawings()
 			Draw.Text("CLEAR ENABLED", 20, textPos.x - 57, textPos.y + 40, Draw.Color(255, 000, 255, 000)) 
 		else
 			Draw.Text("CLEAR DISABLED", 20, textPos.x - 57, textPos.y + 40, Draw.Color(255, 225, 000, 000)) 
-		end
-	end
-	if RepoKatarina.Draw.D:Value() then
-		for i = 1, Game.HeroCount() do
-			local enemy = Game.Hero(i)
-			if enemy and enemy.isEnemy and not enemy.dead and enemy.visible then
-				local barPos = enemy.hpBar
-				local health = enemy.health
-				local maxHealth = enemy.maxHealth
-				local Qdmg = Qdmg(enemy)
-				local Wdmg = 0
-				local Edmg = Edmg(enemy)
-				local Rdmg = Rdmg(enemy) * 2.5
-				local Damage = Qdmg + Wdmg + Edmg + Rdmg
-				if Damage < health then
-					Draw.Text(tostring(0.1*math.floor(1000*math.min(1,Damage/enemy.health))).." %", 30, enemy.pos:To2D().x, enemy.pos:To2D().y, Draw.Color(255, 255, 000, 000))
-				else
-    				Draw.Text("KILLABLE", 30, enemy.pos:To2D().x, enemy.pos:To2D().y, Draw.Color(255, 255, 000, 000))
-				end
-			end
 		end
 	end
 end
