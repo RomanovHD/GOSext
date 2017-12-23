@@ -1,5 +1,3 @@
--- 
-
 if myHero.charName ~= "Ryze" then return end
 
 require "DamageLib"
