@@ -287,6 +287,9 @@ RepoZed:MenuElement({id = "Clear", name = "Clear", type = MENU})
 	RepoZed.Clear:MenuElement({id = "MP", name = "Min energy", value = 35, min = 0, max = 100})
 	RepoZed.Clear:MenuElement({id = "Key", name = "Enable/Disable", key = string.byte("A"), toggle = true})
 
+RepoZed:MenuElement({id = "Flee", name = "Flee", type = MENU})
+	RepoZed.Flee:MenuElement({id = "W", name = "W - Living Shadow", value = true})
+
 RepoZed:MenuElement({id = "Utility", name = " ", drop = {"Champion Utility"}})
 RepoZed:MenuElement({id = "Leveler", name = "Auto Leveler", type = MENU})
     RepoZed.Leveler:MenuElement({id = "Enabled", name = "Enable", value = true})
@@ -379,6 +382,8 @@ function Tick()
 		Harass()
 	elseif Mode == "Clear" then
 		Lane()
+	elseif Mode == "Flee" then
+		Flee()
 	end
 	Activator()
 	Activator2()
@@ -601,6 +606,13 @@ function Harass()
 				CastQ(target,_shadowPos)
 			end
 		end
+	end
+end
+
+function Flee()
+	if Ready(_W) and RepoZed.Flee.W:Value() then
+		local vec = Vector(myHero.pos):Extended(Vector(mousePos), W.range)
+		Control.CastSpell(HK_W,vec)
 	end
 end
 
@@ -903,31 +915,6 @@ function Drawings()
 			Draw.Text("CLEAR ENABLED", 20, textPos.x - 57, textPos.y + 40, Draw.Color(255, 000, 255, 000)) 
 		else
 			Draw.Text("CLEAR DISABLED", 20, textPos.x - 57, textPos.y + 40, Draw.Color(255, 225, 000, 000)) 
-		end
-	end
-	
-	if RepoZed.Draw.D:Value() then
-		for i = 1, Game.HeroCount() do
-			local enemy = Game.Hero(i)
-			if enemy and enemy.isEnemy and not enemy.dead and enemy.visible then
-				local barPos = enemy.hpBar
-				local health = enemy.health
-				local maxHealth = enemy.maxHealth
-				local Qdmg = Qdmg(enemy)
-                local IGdmg = IGdmg(enemy)
-                local BOTRKdmg = BOTRKdmg(enemy)
-                local Edmg = Edmg(enemy)
-				local Rdmg = Rdmg(enemy)
-				local ELdmg = ELdmg(enemy)
-				local ComboAA = ComboAA(enemy)
-				local Passivedmg = Passivedmg(enemy)
-				local Damage = Passivedmg + Qdmg + BOTRKdmg + Edmg + Rdmg
-				if Damage < health then
-					Draw.Text(tostring(0.1*math.floor(1000*math.min(1,Damage/enemy.health))).." %", 30, enemy.pos:To2D().x, enemy.pos:To2D().y, Draw.Color(255, 255, 000, 000))
-				else
-    				Draw.Text("KILLABLE", 30, enemy.pos:To2D().x, enemy.pos:To2D().y, Draw.Color(255, 255, 000, 000))
-				end
-			end
 		end
 	end
 end
