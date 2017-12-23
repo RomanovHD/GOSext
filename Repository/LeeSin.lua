@@ -1,5 +1,3 @@
--- 
-
 if myHero.charName ~= "LeeSin" then return end
 
 require "DamageLib"
@@ -869,25 +867,4 @@ function Drawings()
 			Draw.Text("CLEAR DISABLED", 20, textPos.x - 57, textPos.y + 40, Draw.Color(255, 225, 000, 000)) 
 		end
     end
-	
-	if RepoLeesin.Draw.D:Value() then
-		for i = 1, Game.HeroCount() do
-			local enemy = Game.Hero(i)
-			if enemy and enemy.isEnemy and not enemy.dead and enemy.visible then
-				local barPos = enemy.hpBar
-				local health = enemy.health
-				local maxHealth = enemy.maxHealth
-                local Qdmg = Qdmg(enemy)
-                local Q2dmg = Q2dmg(enemy)
-                local Edmg = Edmg(enemy)
-				local Rdmg = Rdmg(enemy)
-				local Damage = Qdmg + Q2dmg + Edmg + Rdmg
-				if Damage < health then
-					Draw.Text(tostring(0.1*math.floor(1000*math.min(1,Damage/enemy.health))).." %", 30, enemy.pos:To2D().x, enemy.pos:To2D().y, Draw.Color(255, 255, 000, 000))
-				else
-    				Draw.Text("KILLABLE", 30, enemy.pos:To2D().x, enemy.pos:To2D().y, Draw.Color(255, 255, 000, 000))
-				end
-			end
-		end
-	end
 end
