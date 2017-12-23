@@ -369,7 +369,6 @@ RepoZed:MenuElement({id = "Draw", name = "Drawings", type = MENU})
     RepoZed.Draw:MenuElement({id = "E", name = "E - Shadow Slash", value = true})
     RepoZed.Draw:MenuElement({id = "R", name = "R - Death Mark", value = true})
     RepoZed.Draw:MenuElement({id = "C", name = "Enable Text", value = true})
-    RepoZed.Draw:MenuElement({id = "D", name = "Damage by %", value = true})
 
 Callback.Add("Tick", function() Tick() end)
 Callback.Add("Draw", function() Drawings() end)
