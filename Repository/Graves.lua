@@ -546,10 +546,10 @@ function Lane()
 		local minion = Game.Minion(i)
         if minion then
 			if minion.team == 300 - myHero.team then
-                if IsValidTarget(minion,Q.range) and minion:GetCollision(Q.width, Q.speed, Q.delay) - 1 == RepoGraves.Clear.X:Value() and RepoGraves.Clear.Q:Value() and Ready(_Q) then
+                if IsValidTarget(minion,Q.range) and minion:GetCollision(Q.width, Q.speed, Q.delay) - 1 >= RepoGraves.Clear.X:Value() and RepoGraves.Clear.Q:Value() and Ready(_Q) then
                     Control.CastSpell(HK_Q, minion.pos)
 				end
-				if IsValidTarget(minion,W.range) and RepoGraves.Clear.W:Value() and Ready(_W) and MinionsAround(minion.pos, 250, 300 - myHero.team) == RepoGraves.Clear.X:Value() then
+				if IsValidTarget(minion,W.range) and RepoGraves.Clear.W:Value() and Ready(_W) and MinionsAround(minion.pos, 250, 300 - myHero.team) >= RepoGraves.Clear.X:Value() then
                     Control.CastSpell(HK_W, minion.pos)
                 end
 			end
