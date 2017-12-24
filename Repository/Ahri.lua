@@ -317,8 +317,6 @@ Callback.Add("Tick", function() Tick() end)
 Callback.Add("Draw", function() Drawings() end)
 
 function Tick()
-    Activator2()
-	AutoLevel()
 	local Mode = GetMode()
 	if Mode == "Combo" then
 		Combo()
@@ -329,6 +327,8 @@ function Tick()
 	elseif Mode == "Flee" then
 		Flee()
     end
+	Activator2()
+	AutoLevel()
 end
 
 local _EnemyHeroes
@@ -478,7 +478,7 @@ end
 
 function CastE(target)
 	if target.ms ~= 0 and (E.range - GetDistance(target.pos,myHero.pos))/target.ms <= GetDistance(myHero.pos,target.pos)/(E.speed + E.delay) and not IsFacing(target) then return end
-	if Ready(_E) and castSpell.state == 0 then
+	if Ready(_E) and castSpell.state == 0 and target:GetCollision(E.width, E.speed, E.delay) == 0 then
         if (Game.Timer() - OnWaypoint(target).time < 0.15 or Game.Timer() - OnWaypoint(target).time > 1.0) then
             local ePred = GetPred(target,E.speed,E.delay + Game.Latency()/1000)
             CastSpell(HK_E,ePred,E.range + 200,250)
