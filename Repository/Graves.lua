@@ -463,8 +463,9 @@ function CastQ(target)
     if Ready(_Q) and castSpell.state == 0 then
         if (Game.Timer() - OnWaypoint(target).time < 0.15 or Game.Timer() - OnWaypoint(target).time > 1.0) then
             local qPred = GetPred(target,Q.speed,Q.delay + Game.Latency()/1000)
-		if not MapPosition:intersectsWall(LineSegment(myHero,qPred))
+		if not MapPosition:intersectsWall(LineSegment(myHero,qPred)) then
             CastSpell(HK_Q,qPred,Q.range + 200,250)
+				end
         end
 	end
 end
