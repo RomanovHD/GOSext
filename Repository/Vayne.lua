@@ -470,7 +470,7 @@ function Combo()
 		end
 	end
 	
-	if myHero.attackData.state == STATE_ATTACK and GetDistance(myHero.pos,target.pos) <= myHero.range then return end
+	if myHero.attackData.state ~= STATE_WINDDOWN and GetDistance(myHero.pos,target.pos) <= myHero.range then return end
 
 	if IsValidTarget(target,Q.range) and RepoVayne.Combo.Q:Value() and Ready(_Q) then
 		local vec = Vector(myHero.pos):Extended(Vector(mousePos), 300)
@@ -497,7 +497,7 @@ function Harass()
 		end
 	end
 	
-	if myHero.attackData.state == STATE_ATTACK and GetDistance(myHero.pos,target.pos) <= myHero.range then return end
+	if myHero.attackData.state ~= STATE_WINDDOWN and GetDistance(myHero.pos,target.pos) <= myHero.range then return end
 
 	if IsValidTarget(target,Q.range) and RepoVayne.Harass.Q:Value() and Ready(_Q) then
 		local vec = Vector(myHero.pos):Extended(Vector(mousePos), 300)
@@ -520,7 +520,7 @@ function Lane()
 		local minion = Game.Minion(i)
         if minion then
 			if minion.team == 300 - myHero.team then
-                if IsValidTarget(minion,Q.range) and RepoVayne.Clear.Q:Value() and Ready(_Q) and myHero.attackData.state ~= STATE_ATTACK then
+                if IsValidTarget(minion,Q.range) and RepoVayne.Clear.Q:Value() and Ready(_Q) and myHero.attackData.state == STATE_WINDDOWN then
                     Control.CastSpell(HK_Q, Game.cursorPos())
 				end
 			end
@@ -531,7 +531,7 @@ function Lane()
 						Control.CastSpell(HK_E, minion)
 					end
 				end
-				if IsValidTarget(minion,Q.range) and RepoVayne.Clear.Q:Value() and Ready(_Q) and myHero.attackData.state ~= STATE_ATTACK then
+				if IsValidTarget(minion,Q.range) and RepoVayne.Clear.Q:Value() and Ready(_Q) and myHero.attackData.state == STATE_WINDDOWN then
                     Control.CastSpell(HK_Q, Game.cursorPos())
 				end
 			end
