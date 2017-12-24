@@ -464,7 +464,7 @@ function Combo()
 	if target == nil then return end
 
 	if IsValidTarget(target,E.range) and RepoVayne.Combo.E:Value() and Ready(_E) then
-		local vec = Vector(target.pos) - Vector(Vector(target.pos) - Vector(myHero.pos)):Normalized() * -475
+		local vec = Vector(target.pos) - Vector(Vector(target.pos) - Vector(myHero.pos)):Normalized() * -425
 		if MapPosition:intersectsWall(LineSegment(target,vec)) then
 			Control.CastSpell(HK_E, target)
 		end
@@ -491,7 +491,7 @@ function Harass()
 	if target == nil then return end
     
 	if IsValidTarget(target,E.range) and RepoVayne.Harass.E:Value() and Ready(_E) then
-		local vec = Vector(target.pos) - Vector(Vector(target.pos) - Vector(myHero.pos)):Normalized() * -475
+		local vec = Vector(target.pos) - Vector(Vector(target.pos) - Vector(myHero.pos)):Normalized() * -425
 		if MapPosition:intersectsWall(LineSegment(target,vec)) then
 			Control.CastSpell(HK_E, target)
 		end
