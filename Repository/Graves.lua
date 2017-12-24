@@ -307,9 +307,6 @@ Callback.Add("Tick", function() Tick() end)
 Callback.Add("Draw", function() Drawings() end)
 
 function Tick()
-    Killsteal()
-    Activator2()
-	AutoLevel()
 	local Mode = GetMode()
 	if Mode == "Combo" then
 		Combo()
@@ -320,6 +317,9 @@ function Tick()
 	elseif Mode == "Flee" then
 		Flee()
     end
+	Killsteal()
+    Activator2()
+	AutoLevel()
 end
 
 local _EnemyHeroes
