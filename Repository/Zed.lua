@@ -89,6 +89,17 @@ local function Qdmg(target)
     return 0
 end
 
+local function Qonlydmg(target)
+    if Ready(_Q) then
+        if target:GetCollision(70, 900, 0.25) == 0 then
+            return CalcPhysicalDamage(myHero,target,(45 + 35 * myHero:GetSpellData(_Q).level + 0.9 * myHero.bonusDamage))
+        elseif target:GetCollision(70, 900, 0.25) ~= 0 then
+            return CalcPhysicalDamage(myHero,target,(45 + 35 * myHero:GetSpellData(_Q).level + 0.9 * myHero.bonusDamage * 0.6))
+        end
+    end
+    return 0
+end
+
 local function Edmg(target)
     if Ready(_E) then
         return CalcPhysicalDamage(myHero,target,(45 + 25 * myHero:GetSpellData(_E).level + 0.8 * myHero.bonusDamage))
@@ -219,7 +230,7 @@ local function GetMode()
         elseif EOW.CurrentMode == 2 then
             return "Harass"
         elseif EOW.CurrentMode == 3 then
-            return "Lasthit"
+            return "LastHit"
         elseif EOW.CurrentMode == 4 then
             return "Clear"
         end
@@ -253,9 +264,9 @@ local function EnableOrb(bool)
 	end
 end
 
-local RepoZed = MenuElement({type = MENU, id = "RepoZed", name = "Roman Repo 7.24", leftIcon = "https://raw.githubusercontent.com/RomanovHD/GOSext/master/Repository/Screenshot_1.png"})
+local RepoZed = MenuElement({type = MENU, id = "RepoZed", name = "Repository 7.24", leftIcon = "https://raw.githubusercontent.com/RomanovHD/GOSext/master/Repository/Screenshot_1.png"})
 
-RepoZed:MenuElement({id = "Me", name = "Zed", drop = {"v4.0"}})
+RepoZed:MenuElement({id = "Me", name = "Zed", drop = {" "}})
 RepoZed:MenuElement({id = "Core", name = " ", drop = {"Champion Core"}})
 RepoZed:MenuElement({id = "Combo", name = "Combo", type = MENU})
 	RepoZed.Combo:MenuElement({id = "Q", name = "Q - Razor Shuriken", value = true})
@@ -286,6 +297,10 @@ RepoZed:MenuElement({id = "Clear", name = "Clear", type = MENU})
 	RepoZed.Clear:MenuElement({id = "EX", name = "Minions [for lane]", value = 5, min = 1, max = 7})
 	RepoZed.Clear:MenuElement({id = "MP", name = "Min energy", value = 35, min = 0, max = 100})
 	RepoZed.Clear:MenuElement({id = "Key", name = "Enable/Disable", key = string.byte("A"), toggle = true})
+
+RepoZed:MenuElement({id = "LastHit", name = "LastHit", type = MENU})
+	RepoZed.LastHit:MenuElement({id = "Q", name = "Q - Razor Shuriken", value = true})
+	RepoZed.LastHit:MenuElement({id = " ", name = " ", drop = {"Clear Key/Energy applies for LH"}})
 
 RepoZed:MenuElement({id = "Flee", name = "Flee", type = MENU})
 	RepoZed.Flee:MenuElement({id = "W", name = "W - Living Shadow", value = true})
@@ -381,6 +396,8 @@ function Tick()
 		Harass()
 	elseif Mode == "Clear" then
 		Lane()
+	elseif Mode == "LastHit" then
+		LastHit()
 	elseif Mode == "Flee" then
 		Flee()
 	end
@@ -663,6 +680,21 @@ function Lane()
 							CastQ(minion,myHero.pos)
 						end
 					end
+				end
+			end
+		end
+	end
+end
+
+function LastHit()
+	if RepoZed.Clear.Key:Value() == false then return end
+	if myHero.mana < RepoZed.Clear.MP:Value() * 2 then return end
+	for i = 1, Game.MinionCount() do
+		local minion = Game.Minion(i)
+		if minion then
+			if minion.team == 300 - myHero.team then
+				if IsValidTarget(minion,Q.range) and RepoZed.LastHit.Q:Value() and Ready(_Q) and Qonlydmg(minion) > minion.health then
+					Control.CastSpell(HK_Q, minion)
 				end
 			end
 		end
