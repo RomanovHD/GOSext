@@ -314,7 +314,7 @@ function Khazix:LoadSpells()
 	Q = { range = self:Qrange(), delay = 0.25, cost = 20, icon = "https://vignette.wikia.nocookie.net/leagueoflegends/images/6/6a/Taste_Their_Fear.png" }
 	W = { range = 1000, delay = 0.25, cost = self:Wcost(), speed = 1650, width = myHero:GetSpellData(_W).width, icon = "https://vignette.wikia.nocookie.net/leagueoflegends/images/4/4e/Void_Spike.png" }
     W2 = { icon = "https://vignette.wikia.nocookie.net/leagueoflegends/images/7/7e/Evolved_Spike_Racks.png" }
-    E = { range = self:Erange(), delay = 0.25, cost = 50, speed = 650, width = myHero.boundingRadius, icon = "https://vignette.wikia.nocookie.net/leagueoflegends/images/a/af/Leap.png" }
+    E = { range = self:Erange(), delay = 0.25, cost = 50, speed = 1700, width = myHero.boundingRadius, icon = "https://vignette.wikia.nocookie.net/leagueoflegends/images/a/af/Leap.png" }
 	R = { range = self:Rrange(), delay = 0.25, cost = 100, icon = "https://vignette.wikia.nocookie.net/leagueoflegends/images/b/bb/Void_Assault.png" }
 end
 
