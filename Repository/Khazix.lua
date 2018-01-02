@@ -145,6 +145,16 @@ local HKITEM = {
 	[ITEM_6] = HK_ITEM_6,
 	[ITEM_7] = HK_ITEM_7,
 }
+
+local function NoPotion()
+	for i = 0, myHero.buffCount do 
+	local buff = myHero:GetBuff(i)
+		if buff.type == 13 and Game.Timer() < buff.expireTime then 
+			return false
+		end
+	end
+	return true
+end
 --- Engine ---
 
 --- Predictions ---
