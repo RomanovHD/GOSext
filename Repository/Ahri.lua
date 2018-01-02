@@ -563,7 +563,7 @@ function Ahri:GetComboDamage(unit)
 	local Total = 0
 	local Qdmg = CalcMagicalDamage(myHero, unit, (15 + 25 * myHero:GetSpellData(_Q).level + 0.35 * myHero.ap))
 	local Q2dmg = (15 + 25 * myHero:GetSpellData(_Q).level + 0.35 * myHero.ap)
-	local Wdmg = CalcMagicalDamage(myHero, unit, (15 + 25 * myHero:GetSpellData(_Q).level + 0.3 * myHero.ap))
+	local Wdmg = CalcMagicalDamage(myHero, unit, (15 + 25 * myHero:GetSpellData(_W).level + 0.3 * myHero.ap))
 	local Edmg = CalcMagicalDamage(myHero, unit, (25 + 35 * myHero:GetSpellData(_E).level + 0.6 * myHero.ap))
 	local Rdmg = CalcMagicalDamage(myHero, unit, (30 + 40 * myHero:GetSpellData(_R).level + 0.25 * myHero.ap))
 	if Ready(_Q) then
