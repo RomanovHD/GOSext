@@ -7,7 +7,7 @@ if FileExist(COMMON_PATH .. "TPred.lua") then
 	require 'TPred'
 end
 
-local Version = "v1.5"
+local Version = "v2.0"
 --- Engine ---
 local function Ready(spell)
 	return myHero:GetSpellData(spell).currentCd == 0 and myHero:GetSpellData(spell).level > 0 and myHero:GetSpellData(spell).mana <= myHero.mana and Game.CanUseSpell(spell) == 0 
@@ -297,6 +297,53 @@ function TRUSCast(hotkey,slot,target,predmode)
     end
 end
 -- TRUS --
+
+-- Romanov --
+function Dir(to)
+	local topath = to.pathing
+	local dir
+	if topath.hasMovePath then
+		for i = topath.pathIndex, topath.pathCount do
+			dir = to:GetPath(i)
+        end
+    end
+	return dir
+end
+
+local splitsecond = 0.01
+function RomanovPred(from,to,speed,delay,width)
+	local dir = Dir(to)
+	if dir == nil or to.activeSpell.valid then return to.pos end
+
+    local movespeed = to.ms
+    local vec = to.pos:Extended(dir, - movespeed * splitsecond + width + to.boundingRadius)
+    local targtovec = GetDistance(to.pos,vec)
+    local speedtimetovec = GetDistance(to.pos,vec) / movespeed
+
+    local disttovec = GetDistance(from.pos,vec)
+    local timetovec = (disttovec / speed) + delay
+
+    local result = timetovec - speedtimetovec
+
+    if result < -0.01 then
+        splitsecond = splitsecond + (-1 * (result - 0.01))
+    elseif result > 0.01 then
+        splitsecond = splitsecond - (result - 0.01)
+    else
+        splitsecond = splitsecond
+	end
+	return vec
+end
+
+function RomanovCast(hotkey,slot,target,from)
+	local pred = RomanovPred(from,target,slot.speed,slot.delay,slot.width)
+	if GetDistance(pred,from.pos) < slot.range and castSpell.state == 0 then
+		EnableOrb(false)
+		Control.CastSpell(hotkey, pred)
+		DelayAction(function() EnableOrb(true) end, 0.25)
+	end
+end
+-- Romanov --
 --- Predictions
 
 --- Ahri ---
@@ -319,7 +366,7 @@ function Ahri:LoadSpells()
 end
 
 function Ahri:LoadMenu()
-	RomanovAhri = MenuElement({type = MENU, id = "RomanovAhri", name = "Romanov Repository "..Version})
+	RomanovAhri = MenuElement({type = MENU, id = "RomanovAhri", name = "Romanov's Signature "..Version})
 	--- Version ---
 	RomanovAhri:MenuElement({name = "Ahri", drop = {AhriVersion}, leftIcon = "https://vignette.wikia.nocookie.net/leagueoflegends/images/2/2c/Ahri_OriginalCircle.png"})
 	--- Combo ---
@@ -365,7 +412,7 @@ function Ahri:LoadMenu()
     RomanovAhri.Misc:MenuElement({id = "Eks", name = "Killsecure [E]", value = true, leftIcon = E.icon})
     --- Misc ---
     RomanovAhri:MenuElement({type = MENU, id = "Pred", name = "Predict Settings"})
-    RomanovAhri.Pred:MenuElement({id = "Wich", name = "Wich Predict", drop = {"Noddy","Eternal Prediction","TPred","Normal"}})
+    RomanovAhri.Pred:MenuElement({id = "Wich", name = "Wich Predict", drop = {"Noddy","Eternal Prediction","TPred","Normal","Romanov [BETA]"}})
 	--- Draw ---
 	RomanovAhri:MenuElement({type = MENU, id = "Draw", name = "Draw Settings"})
 	RomanovAhri.Draw:MenuElement({id = "Q", name = "Draw [Q] Range", value = true, leftIcon = Q.icon})
@@ -400,7 +447,9 @@ function Ahri:CastQ(target)
     elseif pred == 4 then
         local predict = target:GetPrediction(Q.speed, Q.delay)
         Control.CastSpell(HK_Q, predict)
-    end
+    elseif pred == 5 then
+		RomanovCast(HK_Q,Q,target,myHero)
+	end
 end
 
 function Ahri:CastE(target)
@@ -415,7 +464,9 @@ function Ahri:CastE(target)
     elseif pred == 4 then
         target:GetPrediction(E.speed, E.delay)
         Control.CastSpell(HK_E, predict)
-    end
+	elseif pred == 5 then
+		RomanovCast(HK_E,E,target,myHero)
+	end
 end
 
 function Ahri:Combo()
@@ -573,7 +624,7 @@ function Ahri:GetComboDamage(unit)
 	local Total = 0
 	local Qdmg = CalcMagicalDamage(myHero, unit, (15 + 25 * myHero:GetSpellData(_Q).level + 0.35 * myHero.ap))
 	local Q2dmg = (15 + 25 * myHero:GetSpellData(_Q).level + 0.35 * myHero.ap)
-	local Wdmg = CalcMagicalDamage(myHero, unit, (15 + 25 * myHero:GetSpellData(_W).level + 0.3 * myHero.ap))
+	local Wdmg = CalcMagicalDamage(myHero, unit, (15 + 25 * myHero:GetSpellData(_Q).level + 0.3 * myHero.ap))
 	local Edmg = CalcMagicalDamage(myHero, unit, (25 + 35 * myHero:GetSpellData(_E).level + 0.6 * myHero.ap))
 	local Rdmg = CalcMagicalDamage(myHero, unit, (30 + 40 * myHero:GetSpellData(_R).level + 0.25 * myHero.ap))
 	if Ready(_Q) then
