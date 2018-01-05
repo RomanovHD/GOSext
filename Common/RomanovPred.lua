@@ -5,7 +5,7 @@
         end
 
     Prediction API
-        PredPos(from,to,speed,delay,width)
+        RomanovPredPos(from,to,speed,delay,width)
 
     Hitchance API
         Hitchance(from,to,speed,delay,width,range)
