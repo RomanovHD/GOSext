@@ -1,10 +1,10 @@
 require 'DamageLib'
 require '2DGeometry'
 require 'MapPositionGOS'
-require 'Eternal Prediction'
+require 'Collision'
 
-if FileExist(COMMON_PATH .. "TPred.lua") then
-	require 'TPred'
+if FileExist(COMMON_PATH .. "RomanovPred.lua") then
+	require 'RomanovPred'
 end
 
 local Version = "v2.0"
@@ -158,186 +158,10 @@ end
 --- Engine ---
 
 --- Predictions ---
--- Noddy --
-local _EnemyHeroes
-local function GetEnemyHeroes()
-	if _EnemyHeroes then return _EnemyHeroes end
-	_EnemyHeroes = {}
-	for i = 1, Game.HeroCount() do
-		local unit = Game.Hero(i)
-		if unit.isEnemy then
-			table.insert(_EnemyHeroes, unit)
-		end
-	end
-	return _EnemyHeroes
-end
-
-local _OnVision = {}
-function OnVision(unit)
-	if _OnVision[unit.networkID] == nil then _OnVision[unit.networkID] = {state = unit.visible , tick = GetTickCount(), pos = unit.pos} end
-	if _OnVision[unit.networkID].state == true and not unit.visible then _OnVision[unit.networkID].state = false _OnVision[unit.networkID].tick = GetTickCount() end
-	if _OnVision[unit.networkID].state == false and unit.visible then _OnVision[unit.networkID].state = true _OnVision[unit.networkID].tick = GetTickCount() end
-	return _OnVision[unit.networkID]
-end
-Callback.Add("Tick", function() OnVisionF() end)
-local visionTick = GetTickCount()
-function OnVisionF()
-	if GetTickCount() - visionTick > 100 then
-		for i,v in pairs(GetEnemyHeroes()) do
-			OnVision(v)
-		end
-	end
-end
-
-local _OnWaypoint = {}
-function OnWaypoint(unit)
-	if _OnWaypoint[unit.networkID] == nil then _OnWaypoint[unit.networkID] = {pos = unit.posTo , speed = unit.ms, time = Game.Timer()} end
-	if _OnWaypoint[unit.networkID].pos ~= unit.posTo then 
-		-- print("OnWayPoint:"..unit.charName.." | "..math.floor(Game.Timer()))
-		_OnWaypoint[unit.networkID] = {startPos = unit.pos, pos = unit.posTo , speed = unit.ms, time = Game.Timer()}
-			DelayAction(function()
-				local time = (Game.Timer() - _OnWaypoint[unit.networkID].time)
-				local speed = GetDistance2D(_OnWaypoint[unit.networkID].startPos,unit.pos)/(Game.Timer() - _OnWaypoint[unit.networkID].time)
-				if speed > 1250 and time > 0 and unit.posTo == _OnWaypoint[unit.networkID].pos and GetDistance(unit.pos,_OnWaypoint[unit.networkID].pos) > 200 then
-					_OnWaypoint[unit.networkID].speed = GetDistance2D(_OnWaypoint[unit.networkID].startPos,unit.pos)/(Game.Timer() - _OnWaypoint[unit.networkID].time)
-					-- print("OnDash: "..unit.charName)
-				end
-			end,0.05)
-	end
-	return _OnWaypoint[unit.networkID]
-end
-
-local function GetPred(unit,speed,delay,sourcePos)
-	local speed = speed or math.huge
-	local delay = delay or 0.25
-	local sourcePos = sourcePos or myHero.pos
-	local unitSpeed = unit.ms
-	if OnWaypoint(unit).speed > unitSpeed then unitSpeed = OnWaypoint(unit).speed end
-	if OnVision(unit).state == false then
-		local unitPos = unit.pos + Vector(unit.pos,unit.posTo):Normalized() * ((GetTickCount() - OnVision(unit).tick)/1000 * unitSpeed)
-		local predPos = unitPos + Vector(unit.pos,unit.posTo):Normalized() * (unitSpeed * (delay + (GetDistance(sourcePos,unitPos)/speed)))
-		if GetDistance(unit.pos,predPos) > GetDistance(unit.pos,unit.posTo) then predPos = unit.posTo end
-		return predPos
-	else
-		if unitSpeed > unit.ms then
-			local predPos = unit.pos + Vector(OnWaypoint(unit).startPos,unit.posTo):Normalized() * (unitSpeed * (delay + (GetDistance(sourcePos,unit.pos)/speed)))
-			if GetDistance(unit.pos,predPos) > GetDistance(unit.pos,unit.posTo) then predPos = unit.posTo end
-			return predPos
-		elseif IsImmobileTarget(unit) then
-			return unit.pos
-		else
-			return unit:GetPrediction(speed,delay)
-		end
-	end
-end
-
-local castSpell = {state = 0, tick = GetTickCount(), casting = GetTickCount() - 1000, mouse = mousePos}
-local function CastSpell(spell,pos,range,delay)
-local range = range or math.huge
-local delay = delay or 250
-local ticker = GetTickCount()
-
-	if castSpell.state == 0 and GetDistance(myHero.pos,pos) < range and ticker - castSpell.casting > delay + Game.Latency() and pos:ToScreen().onScreen then
-		castSpell.state = 1
-		castSpell.mouse = mousePos
-		castSpell.tick = ticker
-	end
-	if castSpell.state == 1 then
-		if ticker - castSpell.tick < Game.Latency() then
-			Control.SetCursorPos(pos)
-			Control.KeyDown(spell)
-			Control.KeyUp(spell)
-			castSpell.casting = ticker + delay
-			DelayAction(function()
-				if castSpell.state == 1 then
-					Control.SetCursorPos(castSpell.mouse)
-					castSpell.state = 0
-				end
-			end,Game.Latency()/1000)
-		end
-		if ticker - castSpell.casting > Game.Latency() then
-			Control.SetCursorPos(castSpell.mouse)
-			castSpell.state = 0
-		end
-	end
-end
-
-function NoddyCast(hotkey,slot,target)
-	if castSpell.state == 0 then
-        if (Game.Timer() - OnWaypoint(target).time < 0.15 or Game.Timer() - OnWaypoint(target).time > 1.0) then
-            local pred = GetPred(target,slot.speed,slot.delay + Game.Latency()/1000)
-            if GetDistance(pred) < slot.range then
-                CastSpell(hotkey,pred,slot.range)
-            end
-        end
-	end
-end
-
--- Noddy --
-
--- Toshibiotro --
-function ToshCast(hotkey,slot,target,predmode)
-	local data = { range = myHero:GetSpellData(slot).range, delay = myHero:GetSpellData(slot).delay, speed = myHero:GetSpellData(slot).speed, width = myHero:GetSpellData(slot).width }
-	local spell = Prediction:SetSpell(data, predmode, true)
-	local pred = spell:GetPrediction(target,myHero.pos)
-	if pred and pred.hitChance >= 0.2 then
-		Control.CastSpell(hotkey, pred.castPos)
-	end
-end
--- Toshibiotro --
-
--- TRUS --
-function TRUSCast(hotkey,slot,target,predmode)
-    local castpos
-    if (TPred) and castSpell.state == 0 then
-        local castpos,HitChance, pos = TPred:GetBestCastPosition(target, slot.delay, slot.width, slot.range, slot.speed, myHero.pos, false, predmode)
-        if (HitChance > 0) then
-            Control.CastSpell(hotkey, castpos)
-        end
-    end
-end
--- TRUS --
-
 -- Romanov --
-function Dir(to)
-	local topath = to.pathing
-	local dir
-	if topath.hasMovePath then
-		for i = topath.pathIndex, topath.pathCount do
-			dir = to:GetPath(i)
-        end
-    end
-	return dir
-end
-
-local splitsecond = 0.01
-function RomanovPred(from,to,speed,delay,width)
-	local dir = Dir(to)
-	if dir == nil or to.activeSpell.valid then return to.pos end
-
-    local movespeed = to.ms
-    local vec = to.pos:Extended(dir, - movespeed * splitsecond + width + to.boundingRadius)
-    local targtovec = GetDistance(to.pos,vec)
-    local speedtimetovec = GetDistance(to.pos,vec) / movespeed
-
-    local disttovec = GetDistance(from.pos,vec)
-    local timetovec = (disttovec / speed) + delay
-
-    local result = timetovec - speedtimetovec
-
-    if result < -0.01 then
-        splitsecond = splitsecond + (-1 * (result - 0.01))
-    elseif result > 0.01 then
-        splitsecond = splitsecond - (result - 0.01)
-    else
-        splitsecond = splitsecond
-	end
-	return vec
-end
-
 function RomanovCast(hotkey,slot,target,from)
-	local pred = RomanovPred(from,target,slot.speed,slot.delay,slot.width)
-	if GetDistance(pred,from.pos) < slot.range and castSpell.state == 0 then
+	local pred = RomanovPredPos(from,target,slot.speed,slot.delay,slot.width)
+	if RomanovHitchance(from,target,slot.speed,slot.delay,slot.range,slot.width) >= 2 then
 		EnableOrb(false)
 		Control.CastSpell(hotkey, pred)
 		DelayAction(function() EnableOrb(true) end, 0.25)
@@ -410,10 +234,7 @@ function Ahri:LoadMenu()
 	RomanovAhri.Misc:MenuElement({id = "Ecc", name = "Auto [E] Immobile", value = true, leftIcon = E.icon})
 	RomanovAhri.Misc:MenuElement({id = "Qks", name = "Killsecure [Q]", value = true, leftIcon = Q.icon})
     RomanovAhri.Misc:MenuElement({id = "Eks", name = "Killsecure [E]", value = true, leftIcon = E.icon})
-    --- Misc ---
-    RomanovAhri:MenuElement({type = MENU, id = "Pred", name = "Predict Settings"})
-    RomanovAhri.Pred:MenuElement({id = "Wich", name = "Wich Predict", drop = {"Noddy","Eternal Prediction","TPred","Normal","Romanov [BETA]"}})
-	--- Draw ---
+    --- Draw ---
 	RomanovAhri:MenuElement({type = MENU, id = "Draw", name = "Draw Settings"})
 	RomanovAhri.Draw:MenuElement({id = "Q", name = "Draw [Q] Range", value = true, leftIcon = Q.icon})
 	RomanovAhri.Draw:MenuElement({id = "E", name = "Draw [E] Range", value = true, leftIcon = E.icon})
@@ -437,36 +258,12 @@ function Ahri:Tick()
 end
 
 function Ahri:CastQ(target)
-    local pred = RomanovAhri.Pred.Wich:Value()
-    if pred == 1 then
-        NoddyCast(HK_Q,Q,target)
-    elseif pred == 2 then
-        ToshCast(HK_Q,_Q,target,TYPE_LINE)
-    elseif pred == 3 then
-        TRUSCast(HK_Q,Q,target,"line")
-    elseif pred == 4 then
-        local predict = target:GetPrediction(Q.speed, Q.delay)
-        Control.CastSpell(HK_Q, predict)
-    elseif pred == 5 then
-		RomanovCast(HK_Q,Q,target,myHero)
-	end
+	RomanovCast(HK_Q,Q,target,myHero)
 end
 
 function Ahri:CastE(target)
-    if target:GetCollision(E.width, E.speed, E.delay) ~= 0 then return end
-    local pred = RomanovAhri.Pred.Wich:Value()
-    if pred == 1 then
-        NoddyCast(HK_E,E,target)
-    elseif pred == 2 then
-        ToshCast(HK_E,E,target,TYPE_LINE)
-    elseif pred == 3 then
-        TRUSCast(HK_E,E,target,"line")
-    elseif pred == 4 then
-        target:GetPrediction(E.speed, E.delay)
-        Control.CastSpell(HK_E, predict)
-	elseif pred == 5 then
-		RomanovCast(HK_E,E,target,myHero)
-	end
+	if target:GetCollision(E.width, E.speed, E.delay) ~= 0 then return end
+	RomanovCast(HK_E,E,target,myHero)
 end
 
 function Ahri:Combo()
@@ -481,7 +278,7 @@ function Ahri:Combo()
             end
 		end
 	end
-    if RomanovAhri.Combo.E:Value() and Ready(_E) and target:GetCollision(E.width, E.speed, E.delay) == 0 then
+    if RomanovAhri.Combo.E:Value() and Ready(_E) then
         self:CastE(target)
 	end
 	if RomanovAhri.Combo.Q:Value() and Ready(_Q) and GetDistance(target.pos) < Q.range then
@@ -500,7 +297,7 @@ function Ahri:Harass()
     if target == nil then return end
     local priority = RomanovAhri.Harass.Priority:Value()
 
-	if RomanovAhri.Harass.E:Value() and Ready(_E) and target:GetCollision(E.width, E.speed, E.delay) == 0 and ((priority == 1 and myHero.mana > Q.cost + E.cost) or (priority == 2 and myHero.mana > E.cost)) then
+	if RomanovAhri.Harass.E:Value() and Ready(_E) and ((priority == 1 and myHero.mana > Q.cost + E.cost) or (priority == 2 and myHero.mana > E.cost)) then
         self:CastE(target)
 	end
 	if RomanovAhri.Harass.Q:Value() and Ready(_Q) and ((priority == 1 and myHero.mana > Q.cost) or (priority == 2 and myHero.mana > Q.cost + E.cost)) then
@@ -597,7 +394,7 @@ function Ahri:Misc()
     
 	if RomanovAhri.Misc.Eks:Value() and Ready(_E) then
 		local Edmg = CalcMagicalDamage(myHero, target, (25 + 35 * myHero:GetSpellData(_E).level + 0.6 * myHero.ap))
-		if Edmg > target.health and target:GetCollision(E.width,E.speed,E.delay) == 0 then
+		if Edmg > target.health then
 			self:CastE(target)
 		end
 	end
@@ -609,7 +406,7 @@ function Ahri:Misc()
     end
     
     if RomanovAhri.Misc.Ecc:Value() and Ready(_E) then
-		if IsImmobileTarget(target) and target:GetCollision(E.width,E.speed,E.delay) == 0 then
+		if IsImmobileTarget(target) then
 			self:CastE(target)
 		end
     end
