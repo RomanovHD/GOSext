@@ -16,6 +16,8 @@
             4 = very high
 ]]
 
+local RomanovPredVersion = 1.0
+
 function Dir(to)
 	local topath = to.pathing
 	local dir
