@@ -1,7 +1,6 @@
 require 'DamageLib'
 require '2DGeometry'
 require 'MapPositionGOS'
-require 'Collision'
 
 if FileExist(COMMON_PATH .. "RomanovPred.lua") then
 	require 'RomanovPred'
