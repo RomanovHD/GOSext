@@ -14,9 +14,10 @@
             2 = normal
             3 = high
             4 = very high
+            5 = dashing
 ]]
 
-local RomanovPredVersion = "v1.0"
+local RomanovPredVersion = "v2.0"
 
 function Dir(to)
 	local topath = to.pathing
@@ -32,6 +33,20 @@ end
 function GetDistance(p1,p2)
     local p2 = p2 or myHero.pos
     return  math.sqrt(math.pow((p2.x - p1.x),2) + math.pow((p2.y - p1.y),2) + math.pow((p2.z - p1.z),2))
+end
+
+function Dash(to)
+    local dash = to.pathing
+    local dashing
+    local dashspeed
+    if dash.isDashing then
+        local dashing = true
+        local dashspeed = dash.dashSpeed
+    else
+        local dashing = false
+        local dashspeed = 0
+    end
+    return dashing, dashspeed
 end
 
 function MoveHandleBuff(to,duration)
@@ -53,8 +68,13 @@ local splitsecond = 0.01
 function RomanovPredPos(from,to,speed,delay,width)
     local distto = GetDistance(from.pos,to.pos)
     local timeto = (distto / speed) + delay
+    local dashing, dashspeed = Dash(to)
 	local dir = Dir(to)
     if dir == nil or to.isChanneling then return to.pos end
+
+    if dashing == true then
+        local movespeed = dashspeed
+    end
 
     local movespeed = to.ms
     local vec = to.pos:Extended(dir, - movespeed * splitsecond)
@@ -83,9 +103,13 @@ function RomanovHitchance(from,to,speed,delay,range,width)
     local timetopred = (disttopred / speed) + delay
     local distto = GetDistance(from.pos,to.pos)
     local timeto = (distto / speed) + delay
+    local dashing, timetodash, endpos = Dash(to)
 
     if disttopred > range then
         return 0
+    end
+    if dashing == true then
+        return 5
     end
     if MoveHandleBuff(to,timeto) == immobile then
         return 4
