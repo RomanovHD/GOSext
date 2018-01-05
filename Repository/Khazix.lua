@@ -1,13 +1,12 @@
 require 'DamageLib'
 require '2DGeometry'
 require 'MapPositionGOS'
-require 'Eternal Prediction'
 
-if FileExist(COMMON_PATH .. "TPred.lua") then
-	require 'TPred'
+if FileExist(COMMON_PATH .. "RomanovPred.lua") then
+	require 'RomanovPred'
 end
 
-local Version = "v1.5"
+local Version = "v2.0"
 --- Engine ---
 local function Ready(spell)
 	return myHero:GetSpellData(spell).currentCd == 0 and myHero:GetSpellData(spell).level > 0 and myHero:GetSpellData(spell).mana <= myHero.mana and Game.CanUseSpell(spell) == 0 
@@ -158,144 +157,16 @@ end
 --- Engine ---
 
 --- Predictions ---
--- Noddy --
-local _EnemyHeroes
-local function GetEnemyHeroes()
-	if _EnemyHeroes then return _EnemyHeroes end
-	_EnemyHeroes = {}
-	for i = 1, Game.HeroCount() do
-		local unit = Game.Hero(i)
-		if unit.isEnemy then
-			table.insert(_EnemyHeroes, unit)
-		end
-	end
-	return _EnemyHeroes
-end
-
-local _OnVision = {}
-function OnVision(unit)
-	if _OnVision[unit.networkID] == nil then _OnVision[unit.networkID] = {state = unit.visible , tick = GetTickCount(), pos = unit.pos} end
-	if _OnVision[unit.networkID].state == true and not unit.visible then _OnVision[unit.networkID].state = false _OnVision[unit.networkID].tick = GetTickCount() end
-	if _OnVision[unit.networkID].state == false and unit.visible then _OnVision[unit.networkID].state = true _OnVision[unit.networkID].tick = GetTickCount() end
-	return _OnVision[unit.networkID]
-end
-Callback.Add("Tick", function() OnVisionF() end)
-local visionTick = GetTickCount()
-function OnVisionF()
-	if GetTickCount() - visionTick > 100 then
-		for i,v in pairs(GetEnemyHeroes()) do
-			OnVision(v)
-		end
+-- Romanov --
+function RomanovCast(hotkey,slot,target,from)
+	local pred = RomanovPredPos(from,target,slot.speed,slot.delay,slot.width)
+	if RomanovHitchance(from,target,slot.speed,slot.delay,slot.range,slot.width) >= 2 then
+		EnableOrb(false)
+		Control.CastSpell(hotkey, pred)
+		DelayAction(function() EnableOrb(true) end, 0.25)
 	end
 end
-
-local _OnWaypoint = {}
-function OnWaypoint(unit)
-	if _OnWaypoint[unit.networkID] == nil then _OnWaypoint[unit.networkID] = {pos = unit.posTo , speed = unit.ms, time = Game.Timer()} end
-	if _OnWaypoint[unit.networkID].pos ~= unit.posTo then 
-		-- print("OnWayPoint:"..unit.charName.." | "..math.floor(Game.Timer()))
-		_OnWaypoint[unit.networkID] = {startPos = unit.pos, pos = unit.posTo , speed = unit.ms, time = Game.Timer()}
-			DelayAction(function()
-				local time = (Game.Timer() - _OnWaypoint[unit.networkID].time)
-				local speed = GetDistance2D(_OnWaypoint[unit.networkID].startPos,unit.pos)/(Game.Timer() - _OnWaypoint[unit.networkID].time)
-				if speed > 1250 and time > 0 and unit.posTo == _OnWaypoint[unit.networkID].pos and GetDistance(unit.pos,_OnWaypoint[unit.networkID].pos) > 200 then
-					_OnWaypoint[unit.networkID].speed = GetDistance2D(_OnWaypoint[unit.networkID].startPos,unit.pos)/(Game.Timer() - _OnWaypoint[unit.networkID].time)
-					-- print("OnDash: "..unit.charName)
-				end
-			end,0.05)
-	end
-	return _OnWaypoint[unit.networkID]
-end
-
-local function GetPred(unit,speed,delay,sourcePos)
-	local speed = speed or math.huge
-	local delay = delay or 0.25
-	local sourcePos = sourcePos or myHero.pos
-	local unitSpeed = unit.ms
-	if OnWaypoint(unit).speed > unitSpeed then unitSpeed = OnWaypoint(unit).speed end
-	if OnVision(unit).state == false then
-		local unitPos = unit.pos + Vector(unit.pos,unit.posTo):Normalized() * ((GetTickCount() - OnVision(unit).tick)/1000 * unitSpeed)
-		local predPos = unitPos + Vector(unit.pos,unit.posTo):Normalized() * (unitSpeed * (delay + (GetDistance(sourcePos,unitPos)/speed)))
-		if GetDistance(unit.pos,predPos) > GetDistance(unit.pos,unit.posTo) then predPos = unit.posTo end
-		return predPos
-	else
-		if unitSpeed > unit.ms then
-			local predPos = unit.pos + Vector(OnWaypoint(unit).startPos,unit.posTo):Normalized() * (unitSpeed * (delay + (GetDistance(sourcePos,unit.pos)/speed)))
-			if GetDistance(unit.pos,predPos) > GetDistance(unit.pos,unit.posTo) then predPos = unit.posTo end
-			return predPos
-		elseif IsImmobileTarget(unit) then
-			return unit.pos
-		else
-			return unit:GetPrediction(speed,delay)
-		end
-	end
-end
-
-local castSpell = {state = 0, tick = GetTickCount(), casting = GetTickCount() - 1000, mouse = mousePos}
-local function CastSpell(spell,pos,range,delay)
-local range = range or math.huge
-local delay = delay or 250
-local ticker = GetTickCount()
-
-	if castSpell.state == 0 and GetDistance(myHero.pos,pos) < range and ticker - castSpell.casting > delay + Game.Latency() and pos:ToScreen().onScreen then
-		castSpell.state = 1
-		castSpell.mouse = mousePos
-		castSpell.tick = ticker
-	end
-	if castSpell.state == 1 then
-		if ticker - castSpell.tick < Game.Latency() then
-			Control.SetCursorPos(pos)
-			Control.KeyDown(spell)
-			Control.KeyUp(spell)
-			castSpell.casting = ticker + delay
-			DelayAction(function()
-				if castSpell.state == 1 then
-					Control.SetCursorPos(castSpell.mouse)
-					castSpell.state = 0
-				end
-			end,Game.Latency()/1000)
-		end
-		if ticker - castSpell.casting > Game.Latency() then
-			Control.SetCursorPos(castSpell.mouse)
-			castSpell.state = 0
-		end
-	end
-end
-
-function NoddyCast(hotkey,slot,target)
-	if castSpell.state == 0 then
-        if (Game.Timer() - OnWaypoint(target).time < 0.15 or Game.Timer() - OnWaypoint(target).time > 1.0) then
-            local pred = GetPred(target,slot.speed,slot.delay + Game.Latency()/1000)
-            if GetDistance(pred) < slot.range then
-                CastSpell(hotkey,pred,slot.range)
-            end
-        end
-	end
-end
--- Noddy --
-
--- Toshibiotro --
-function ToshCast(hotkey,slot,target,predmode)
-	local data = { range = slot.range, delay = slot.delay, speed = slot.speed, width = slot.width }
-	local spell = Prediction:SetSpell(data, predmode, true)
-	local pred = spell:GetPrediction(target,myHero.pos)
-	if pred and pred.hitChance >= 0.2 then
-		Control.CastSpell(hotkey, pred.castPos)
-	end
-end
--- Toshibiotro --
-
--- TRUS --
-function TRUSCast(hotkey,slot,target,predmode)
-    local castpos
-    if (TPred) and castSpell.state == 0 then
-        local castpos,HitChance, pos = TPred:GetBestCastPosition(target, slot.delay, slot.width, slot.range, slot.speed, myHero.pos, false, predmode)
-        if (HitChance > 0) then
-            Control.CastSpell(hotkey, castpos)
-        end
-    end
-end
--- TRUS --
+-- Romanov --
 --- Predictions
 
 --- Khazix ---
@@ -381,32 +252,12 @@ function Khazix:Tick()
 end
 
 function Khazix:CastW(target)
-    if target:GetCollision(W.width, W.speed, W.delay) ~= 0 then return end
-    local pred = RomanovKhazix.Pred.Wich:Value()
-    if pred == 1 then
-        NoddyCast(HK_W,W,target)
-    elseif pred == 2 then
-        ToshCast(HK_W,W,target,TYPE_LINE)
-    elseif pred == 3 then
-        TRUSCast(HK_W,W,target,"line")
-    elseif pred == 4 then
-        local predict = target:GetPrediction(W.speed, W.delay)
-        Control.CastSpell(HK_W, predict)
-    end
+	if target:GetCollision(W.width, W.speed, W.delay) ~= 0 then return end
+	RomanovCast(HK_W,W,target,myHero)
 end
 
 function Khazix:CastE(target)
-    local pred = RomanovKhazix.Pred.Wich:Value()
-    if pred == 1 then
-        NoddyCast(HK_E,E,target)
-    elseif pred == 2 then
-        ToshCast(HK_E,E,target,TYPE_LINE)
-    elseif pred == 3 then
-        TRUSCast(HK_E,E,target,"line")
-    elseif pred == 4 then
-        target:GetPrediction(E.speed, E.delay)
-        Control.CastSpell(HK_E, predict)
-    end
+	RomanovCast(HK_E,E,target,myHero)
 end
 
 function Khazix:Combo()
