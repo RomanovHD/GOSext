@@ -55,7 +55,8 @@ function RomanovPredPos(from,to,speed,delay,width)
     if dir == nil or to.isChanneling then return to.pos end
 
     local movespeed = to.ms
-    local vec = to.pos:Extended(dir, - movespeed * splitsecond - (width/2) - to.boundingRadius)
+    local vec = to.pos:Extended(dir, - movespeed * splitsecond)
+    local vec2 = vec:Extended(to.pos, width/2 + to.boundingRadius)
     local targtovec = GetDistance(to.pos,vec)
     local speedtimetovec = GetDistance(to.pos,vec) / movespeed
 
@@ -71,7 +72,7 @@ function RomanovPredPos(from,to,speed,delay,width)
     else
         splitsecond = splitsecond
 	end
-	return vec
+	return vec2
 end
 
 function RomanovHitchance(from,to,speed,delay,range,width)
