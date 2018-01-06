@@ -234,7 +234,10 @@ function Vayne:LoadMenu()
     --- Flee ---
     RomanovVayne:MenuElement({type = MENU, id = "Flee", name = "Flee Settings"})
     RomanovVayne.Flee:MenuElement({id = "Q", name = "Use [Q]", value = true, leftIcon = Q.icon})
-    RomanovVayne.Flee:MenuElement({id = "E", name = "Use [E]", value = true, leftIcon = E.icon})
+	RomanovVayne.Flee:MenuElement({id = "E", name = "Use [E]", value = true, leftIcon = E.icon})
+	--- Interrupter ---
+    RomanovVayne:MenuElement({type = MENU, id = "Interrupter", name = "Interrupter Settings"})
+    RomanovVayne.Interrupter:MenuElement({id = "E", name = "Use [E]", value = true, leftIcon = E.icon})
 	--- Draw ---
 	RomanovVayne:MenuElement({type = MENU, id = "Draw", name = "Draw Settings"})
 	RomanovVayne.Draw:MenuElement({id = "Q", name = "Draw [Q] Range", value = true, leftIcon = Q.icon})
@@ -253,12 +256,26 @@ function Vayne:Tick()
 	elseif Mode == "Flee" then
 		self:Flee()
 	end
+		self:Interrupter()
 end
 
 function Vayne:Codemn(target)
     local vec = Vector(target.pos) - Vector(Vector(target.pos) - Vector(myHero.pos)):Normalized() * -425
     if MapPosition:intersectsWall(LineSegment(target,vec)) and GetDistance(target.pos) < 550 then
 		Control.CastSpell(HK_E, target)
+    end
+end
+
+function Vayne:Interrupter()
+	if RomanovVayne.Interrupter.E:Value() and Ready(_E) then
+		for i=1, Game.HeroCount() do
+        	local target = Game.Hero(i)      
+        	if target and target.isEnemy and not target.dead and GetDistance(target.pos) < 550 then
+				if RomanovHitchance(myHero,target,E.speed,E.delay,E.range,E.width) == 6 then
+					Control.CastSpell(HK_E, target)
+				end
+			end
+        end
     end
 end
 
