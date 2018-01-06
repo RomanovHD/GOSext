@@ -15,9 +15,10 @@
             3 = high
             4 = very high
             5 = dashing
+            6 = channeling important spell
 ]]
 
-local RomanovPredVersion = "v2.0"
+local RomanovPredVersion = "v3.0"
 
 function Dir(to)
 	local topath = to.pathing
@@ -64,6 +65,21 @@ function MoveHandleBuff(to,duration)
     end
 end
 
+local importantspells = {'CaitlynAceintheHole','ReapTheWhirlwind','karthusfallenonecastsound','katarinarsound','Meditate','missfortunebulletsound','AbsoluteZero','shenstandunitedlock','Destiny','VelkozR','warwickrsound','XerathRMissileWrapper'}
+
+function ChannelingImportantSpell(to,duration)
+    local duration = duration or 0.1
+    for i = 0, to.buffCount do
+        local buff = to:GetBuff(i);
+        if buff.count > 0 then
+            if (buff.name:lower() == importantspells[i]) and buff.duration > duration then
+                return true
+            end
+        end
+    end
+    return false
+end
+
 local splitsecond = 0.01
 function RomanovPredPos(from,to,speed,delay,width)
     local distto = GetDistance(from.pos,to.pos)
@@ -107,6 +123,9 @@ function RomanovHitchance(from,to,speed,delay,range,width)
 
     if disttopred > range then
         return 0
+    end
+    if ChannelingImportantSpell(to,timeto) then
+        return 6
     end
     if dashing == true then
         return 5
