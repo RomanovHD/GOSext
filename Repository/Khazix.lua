@@ -435,7 +435,7 @@ end
 
 function Khazix:Draw()
 	if RomanovKhazix.Draw.W:Value() and Ready(_W) then Draw.Circle(myHero.pos, 1000, 3,  Draw.Color(255,000, 075, 180)) end
-	if RomanovKhazix.Draw.E:Value() and Ready(_E) then Draw.Circle(myHero.pos, 975, 3,  Draw.Color(255,138, 162, 255)) end
+	if RomanovKhazix.Draw.E:Value() and Ready(_E) then Draw.Circle(myHero.pos, self:Erange(), 3,  Draw.Color(255,138, 162, 255)) end
 	if RomanovKhazix.Draw.CT:Value() then
 		local textPos = myHero.pos:To2D()
 		if RomanovKhazix.Clear.Key:Value() then
