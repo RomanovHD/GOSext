@@ -32,8 +32,8 @@ function Dir(to)
 end
 
 function GetDistance(p1,p2)
-    local p2 = p2 or myHero.pos
-    return  math.sqrt(math.pow((p2.x - p1.x),2) + math.pow((p2.y - p1.y),2) + math.pow((p2.z - p1.z),2))
+    local p2 = p2 or myHero
+    return  p1.pos:DistanceTo(p2.pos)
 end
 
 function Dash(to)
