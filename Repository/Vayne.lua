@@ -237,7 +237,10 @@ function Vayne:LoadMenu()
 	RomanovVayne.Flee:MenuElement({id = "E", name = "Use [E]", value = true, leftIcon = E.icon})
 	--- Interrupter ---
     RomanovVayne:MenuElement({type = MENU, id = "Interrupter", name = "Interrupter Settings"})
-    RomanovVayne.Interrupter:MenuElement({id = "E", name = "Use [E]", value = true, leftIcon = E.icon})
+	RomanovVayne.Interrupter:MenuElement({id = "E", name = "Use [E]", value = true, leftIcon = E.icon})
+	--- Antigapclose ---
+    RomanovVayne:MenuElement({type = MENU, id = "Antigapclose", name = "Antigapcloser Settings"})
+	RomanovVayne.Antigapclose:MenuElement({id = "E", name = "Use [E]", value = true, leftIcon = E.icon})
 	--- Draw ---
 	RomanovVayne:MenuElement({type = MENU, id = "Draw", name = "Draw Settings"})
 	RomanovVayne.Draw:MenuElement({id = "Q", name = "Draw [Q] Range", value = true, leftIcon = Q.icon})
@@ -257,6 +260,7 @@ function Vayne:Tick()
 		self:Flee()
 	end
 		self:Interrupter()
+		self:Antigapclose()
 end
 
 function Vayne:Codemn(target)
@@ -272,6 +276,19 @@ function Vayne:Interrupter()
         	local target = Game.Hero(i)      
         	if target and target.isEnemy and not target.dead and GetDistance(target.pos) < 550 then
 				if RomanovHitchance(myHero,target,E.speed,E.delay,E.range,E.width) == 6 then
+					Control.CastSpell(HK_E, target)
+				end
+			end
+        end
+    end
+end
+
+function Vayne:Antigapclose()
+	if RomanovVayne.Antigapclose.E:Value() and Ready(_E) then
+		for i=1, Game.HeroCount() do
+        	local target = Game.Hero(i)      
+			if target and target.isEnemy and not target.dead and GetDistance(target.pos) < E.range then
+				if target.pathing.isDashing and GetDistance(target.pathing.endPos) < 300 then
 					Control.CastSpell(HK_E, target)
 				end
 			end
