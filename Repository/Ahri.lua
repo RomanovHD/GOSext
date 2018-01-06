@@ -1,6 +1,7 @@
 require 'DamageLib'
 require '2DGeometry'
 require 'MapPositionGOS'
+require 'Collision'
 
 if FileExist(COMMON_PATH .. "RomanovPred.lua") then
 	require 'RomanovPred'
@@ -232,7 +233,10 @@ function Ahri:LoadMenu()
     RomanovAhri.Misc:MenuElement({id = "Qcc", name = "Auto [Q] Immobile", value = true, leftIcon = Q.icon})
 	RomanovAhri.Misc:MenuElement({id = "Ecc", name = "Auto [E] Immobile", value = true, leftIcon = E.icon})
 	RomanovAhri.Misc:MenuElement({id = "Qks", name = "Killsecure [Q]", value = true, leftIcon = Q.icon})
-    RomanovAhri.Misc:MenuElement({id = "Eks", name = "Killsecure [E]", value = true, leftIcon = E.icon})
+	RomanovAhri.Misc:MenuElement({id = "Eks", name = "Killsecure [E]", value = true, leftIcon = E.icon})
+	--- Interrupter ---
+    RomanovAhri:MenuElement({type = MENU, id = "Interrupter", name = "Interrupter Settings"})
+    RomanovAhri.Interrupter:MenuElement({id = "E", name = "Use [E]", value = true, leftIcon = E.icon})
     --- Draw ---
 	RomanovAhri:MenuElement({type = MENU, id = "Draw", name = "Draw Settings"})
 	RomanovAhri.Draw:MenuElement({id = "Q", name = "Draw [Q] Range", value = true, leftIcon = Q.icon})
@@ -254,6 +258,7 @@ function Ahri:Tick()
 		self:Flee()
 	end
 		self:Misc()
+		self:Interrupter()
 end
 
 function Ahri:CastQ(target)
@@ -263,6 +268,19 @@ end
 function Ahri:CastE(target)
 	if target:GetCollision(E.width, E.speed, E.delay) ~= 0 then return end
 	RomanovCast(HK_E,E,target,myHero)
+end
+
+function Ahri:Interrupter()
+	if RomanovAhri.Interrupter.E:Value() and Ready(_E) then
+		for i=1, Game.HeroCount() do
+        	local target = Game.Hero(i)      
+        	if target and target.isEnemy and not target.dead and GetDistance(target.pos) < E.range then
+				if RomanovHitchance(myHero,target,E.speed,E.delay,E.range,E.width) == 6 then
+					Control.CastSpell(HK_E, target)
+				end
+			end
+        end
+    end
 end
 
 function Ahri:Combo()
