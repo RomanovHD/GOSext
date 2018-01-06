@@ -307,6 +307,7 @@ end
 function Vayne:Harass()
     local blue = HasBuff(myHero, "crestoftheancientgolem")
 	local target = GetTarget(Q.range)
+	if target == nil then return end
     if RomanovVayne.Harass.Key:Value() == false then return end
 	if PercentMP(myHero) < RomanovVayne.Harass.Mana:Value() and not (blue and RomanovVayne.Harass.Ignore:Value()) then return end
     
