@@ -32,8 +32,8 @@ function Dir(to)
 end
 
 function GetDistance(p1,p2)
-    local p2 = p2 or myHero
-    return  p1.pos:DistanceTo(p2.pos)
+    local p2 = p2 or myHero.pos
+    return  p1:DistanceTo(p2)
 end
 
 function Dash(to)
