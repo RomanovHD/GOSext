@@ -257,7 +257,7 @@ end
 
 function Vayne:Codemn(target)
 	local pred = RomanovPredPos(myHero,target,E.speed,E.delay,E.width)
-    local vec = Vector(pred) - Vector(Vector(pred) - Vector(myHero.pos)):Normalized() * -425
+    local vec = Vector(pred) - Vector(Vector(pred) - Vector(myHero.pos)):Normalized() * -375
     if MapPosition:intersectsWall(LineSegment(target,vec)) and GetDistance(target.pos) < 550 then
 		Control.CastSpell(HK_E, target)
     end
