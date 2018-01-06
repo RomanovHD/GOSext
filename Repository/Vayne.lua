@@ -290,9 +290,9 @@ function Vayne:Combo()
     if RomanovVayne.Combo.R:Value() and Ready(_R) and GetDistance(target.pos) < 850 and HeroesAround(1200) >= RomanovVayne.Combo.X:Value() then
         Control.CastSpell(HK_R)
     end
-    if RomanovVayne.Combo.W:Value() then
+    --[[if RomanovVayne.Combo.W:Value() then
         self:Focus()
-    end
+    end]]
     if RomanovVayne.Combo.E:Value() and Ready(_E) and GetDistance(target.pos) < 550 then
         self:Codemn(target)
     end
@@ -311,9 +311,9 @@ function Vayne:Harass()
     if RomanovVayne.Harass.Key:Value() == false then return end
 	if PercentMP(myHero) < RomanovVayne.Harass.Mana:Value() and not (blue and RomanovVayne.Harass.Ignore:Value()) then return end
     
-    if RomanovVayne.Harass.W:Value() then
+    --[[if RomanovVayne.Harass.W:Value() then
         self:Focus()
-    end
+    end]]
     if RomanovVayne.Harass.E:Value() and Ready(_E) and GetDistance(target.pos) < 550 then
         self:Codemn(target)
     end
