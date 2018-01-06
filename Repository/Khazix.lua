@@ -225,9 +225,6 @@ function Khazix:LoadMenu()
     RomanovKhazix:MenuElement({type = MENU, id = "Misc", name = "Misc Settings"})
     RomanovKhazix.Misc:MenuElement({id = "Wks", name = "Killsecure [W]", value = true, leftIcon = W.icon})
     RomanovKhazix.Misc:MenuElement({id = "Eks", name = "Killsecure [E]", value = true, leftIcon = E.icon})
-    --- Misc ---
-    RomanovKhazix:MenuElement({type = MENU, id = "Pred", name = "Predict Settings"})
-    RomanovKhazix.Pred:MenuElement({id = "Wich", name = "Wich Predict", drop = {"Noddy","Eternal Prediction","TPred","Normal"}})
 	--- Draw ---
 	RomanovKhazix:MenuElement({type = MENU, id = "Draw", name = "Draw Settings"})
 	RomanovKhazix.Draw:MenuElement({id = "W", name = "Draw [W] Range", value = true, leftIcon = W.icon})
