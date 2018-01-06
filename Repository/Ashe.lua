@@ -237,6 +237,9 @@ function Ashe:LoadMenu()
     RomanovAshe.Misc:MenuElement({id = "Rrange", name = "[R] Range Manager", value = 2100, min = 1000, max = 4500, step = 100})
     RomanovAshe.Misc:MenuElement({id = "Wks", name = "Killsecure [W]", value = true, leftIcon = W.icon})
     RomanovAshe.Misc:MenuElement({id = "Rks", name = "Killsecure [R]", value = true, leftIcon = R.icon})
+	--- Interrupter ---
+    RomanovAshe:MenuElement({type = MENU, id = "Interrupter", name = "Interrupter Settings"})
+    RomanovAshe.Interrupter:MenuElement({id = "R", name = "Use [R]", value = false, leftIcon = R.icon})
 	--- Draw ---
 	RomanovAshe:MenuElement({type = MENU, id = "Draw", name = "Draw Settings"})
 	RomanovAshe.Draw:MenuElement({id = "W", name = "Draw [W] Range", value = true, leftIcon = W.icon})
@@ -257,6 +260,20 @@ function Ashe:Tick()
 		self:Flee()
 	end
 		self:Misc()
+		self:Interrupter()
+end
+
+function Ashe:Interrupter()
+	if RomanovAshe.Interrupter.R:Value() and Ready(_R) then
+		for i=1, Game.HeroCount() do
+        	local target = Game.Hero(i)      
+        	if target and target.isEnemy and not target.dead and GetDistance(target.pos) < RomanovAshe.Misc.Rrange:Value() then
+				if RomanovHitchance(myHero,target,R.speed,R.delay,RomanovAshe.Misc.Rrange:Value(),R.width) == 6 then
+					Control.CastSpell(HK_R, target)
+				end
+			end
+        end
+    end
 end
 
 function Ashe:CastW(target)
@@ -432,7 +449,7 @@ function Ashe:GetComboDamage(unit)
 end
 
 function Ashe:Draw()
-	if RomanovAshe.Draw.W:Value() and Ready(_W) then Draw.Circle(myHero.pos, 1200, 3,  Draw.Color(255,000, 075, 180)) end
+	if RomanovAshe.Draw.W:Value() and Ready(_W) then Draw.Circle(myHero.pos, 1000, 3,  Draw.Color(255,000, 075, 180)) end
 	if RomanovAshe.Draw.CT:Value() then
 		local textPos = myHero.pos:To2D()
 		if RomanovAshe.Clear.Key:Value() then
