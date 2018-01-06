@@ -236,7 +236,10 @@ function Ahri:LoadMenu()
 	RomanovAhri.Misc:MenuElement({id = "Eks", name = "Killsecure [E]", value = true, leftIcon = E.icon})
 	--- Interrupter ---
     RomanovAhri:MenuElement({type = MENU, id = "Interrupter", name = "Interrupter Settings"})
-    RomanovAhri.Interrupter:MenuElement({id = "E", name = "Use [E]", value = true, leftIcon = E.icon})
+	RomanovAhri.Interrupter:MenuElement({id = "E", name = "Use [E]", value = true, leftIcon = E.icon})
+	--- Antigapclose ---
+    RomanovAhri:MenuElement({type = MENU, id = "Antigapclose", name = "Antigapcloser Settings"})
+    RomanovAhri.Antigapclose:MenuElement({id = "E", name = "Use [E]", value = true, leftIcon = E.icon})
     --- Draw ---
 	RomanovAhri:MenuElement({type = MENU, id = "Draw", name = "Draw Settings"})
 	RomanovAhri.Draw:MenuElement({id = "Q", name = "Draw [Q] Range", value = true, leftIcon = Q.icon})
@@ -259,6 +262,7 @@ function Ahri:Tick()
 	end
 		self:Misc()
 		self:Interrupter()
+		self:Antigapclose()
 end
 
 function Ahri:CastQ(target)
@@ -277,6 +281,19 @@ function Ahri:Interrupter()
         	if target and target.isEnemy and not target.dead and GetDistance(target.pos) < E.range then
 				if RomanovHitchance(myHero,target,E.speed,E.delay,E.range,E.width) == 6 then
 					Control.CastSpell(HK_E, target)
+				end
+			end
+        end
+    end
+end
+
+function Ahri:Antigapclose()
+	if RomanovAhri.Antigapclose.E:Value() and Ready(_E) then
+		for i=1, Game.HeroCount() do
+        	local target = Game.Hero(i)      
+			if target and target.isEnemy and not target.dead and GetDistance(target.pos) < E.range then
+				if target.pathing.isDashing and GetDistance(target.pathing.endPos) < 300 then
+					self:CastE(target)
 				end
 			end
         end
