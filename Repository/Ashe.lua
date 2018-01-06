@@ -239,7 +239,10 @@ function Ashe:LoadMenu()
     RomanovAshe.Misc:MenuElement({id = "Rks", name = "Killsecure [R]", value = true, leftIcon = R.icon})
 	--- Interrupter ---
     RomanovAshe:MenuElement({type = MENU, id = "Interrupter", name = "Interrupter Settings"})
-    RomanovAshe.Interrupter:MenuElement({id = "R", name = "Use [R]", value = false, leftIcon = R.icon})
+	RomanovAshe.Interrupter:MenuElement({id = "R", name = "Use [R]", value = false, leftIcon = R.icon})
+	--- Antigapclose ---
+    RomanovAshe:MenuElement({type = MENU, id = "Antigapclose", name = "Antigapcloser Settings"})
+    RomanovAshe.Antigapclose:MenuElement({id = "R", name = "Use [R]", value = false, leftIcon = R.icon})
 	--- Draw ---
 	RomanovAshe:MenuElement({type = MENU, id = "Draw", name = "Draw Settings"})
 	RomanovAshe.Draw:MenuElement({id = "W", name = "Draw [W] Range", value = true, leftIcon = W.icon})
@@ -261,6 +264,7 @@ function Ashe:Tick()
 	end
 		self:Misc()
 		self:Interrupter()
+		self:Antigapclose()
 end
 
 function Ashe:Interrupter()
@@ -270,6 +274,19 @@ function Ashe:Interrupter()
         	if target and target.isEnemy and not target.dead and GetDistance(target.pos) < RomanovAshe.Misc.Rrange:Value() then
 				if RomanovHitchance(myHero,target,R.speed,R.delay,RomanovAshe.Misc.Rrange:Value(),R.width) == 6 then
 					Control.CastSpell(HK_R, target)
+				end
+			end
+        end
+    end
+end
+
+function Ashe:Antigapclose()
+	if RomanovAshe.Antigapclose.R:Value() and Ready(_R) then
+		for i=1, Game.HeroCount() do
+        	local target = Game.Hero(i)      
+			if target and target.isEnemy and not target.dead and GetDistance(target.pos) < RomanovAshe.Misc.Rrange:Value() then
+				if target.pathing.isDashing and GetDistance(target.pathing.endPos) < 300 then
+					self:CastR(target)
 				end
 			end
         end
