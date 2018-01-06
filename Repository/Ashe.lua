@@ -432,7 +432,7 @@ function Ashe:GetComboDamage(unit)
 end
 
 function Ashe:Draw()
-	if RomanovAshe.Draw.W:Value() and Ready(_W) then Draw.Circle(myHero.pos, 1000, 3,  Draw.Color(255,000, 075, 180)) end
+	if RomanovAshe.Draw.W:Value() and Ready(_W) then Draw.Circle(myHero.pos, 1200, 3,  Draw.Color(255,000, 075, 180)) end
 	if RomanovAshe.Draw.CT:Value() then
 		local textPos = myHero.pos:To2D()
 		if RomanovAshe.Clear.Key:Value() then
