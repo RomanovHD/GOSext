@@ -31,9 +31,15 @@ function Dir(to)
 	return dir
 end
 
-function GetDistance(p1,p2)
-    local p2 = p2 or myHero.pos
-    return  p1:DistanceTo(p2)
+function GetDistanceSqr(Pos1, Pos2)
+    local Pos2 = Pos2 or myHero.pos
+    local dx = Pos1.x - Pos2.x
+    local dz = (Pos1.z or Pos1.y) - (Pos2.z or Pos2.y)
+    return dx^2 + dz^2
+end
+
+function GetDistance(Pos1, Pos2)
+	return math.sqrt(GetDistanceSqr(Pos1, Pos2))
 end
 
 function Dash(to)
