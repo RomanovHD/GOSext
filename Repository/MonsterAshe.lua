@@ -548,7 +548,7 @@ function Ashe:Killsteal()
     end
     if RomanovAshe.Killsteal.R:Value() and Ready(_R) then
 		local Rdmg = CalcMagicalDamage(myHero, target, (200 * myHero:GetSpellData(_R).level + myHero.ap))
-		if HPred:CanTarget(target) then
+		if HPred:CanTarget(target) and Rdmg > target.health then
             local hitChance, aimPosition = HPred:GetHitchance(myHero.pos, target, R.Range, R.Delay, R.Speed, R.Width, R.Collision, nil)
             if hitChance and hitChance >= 3 and HPred:GetDistance(myHero.pos, aimPosition) <= RomanovAshe.Killsteal.Rrange:Value() then
                 if isOnScreen(target) then
