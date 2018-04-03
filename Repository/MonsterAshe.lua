@@ -170,6 +170,33 @@ local function IsRecalling()
 end
 --- Engine ---
 
+--- Interrupter ---
+local InterruptableSkills = {
+	["Janna"] = {{Key = _R, Duration = 3,KeyName = "R", icon = "https://vignette.wikia.nocookie.net/leagueoflegends/images/0/0e/Monsoon.png"}},
+	["Jhin"] = {{Key = _R, Duration = 10,KeyName = "R", icon = "https://vignette.wikia.nocookie.net/leagueoflegends/images/0/06/Curtain_Call.png"}},
+	["Karthus"] = {{Key = _R, Duration = 3,KeyName = "R", icon = "https://vignette.wikia.nocookie.net/leagueoflegends/images/9/91/Requiem.png"}},
+	["Katarina"] = {{Key = _R, Duration = 2.5,KeyName = "R", icon = "https://vignette.wikia.nocookie.net/leagueoflegends/images/9/9f/Death_Lotus.png"}},
+	["Malzahar"] = {{Key = _R, Duration = 2.5,KeyName = "R", icon = "https://vignette.wikia.nocookie.net/leagueoflegends/images/4/4e/Nether_Grasp.png"}},
+	["MissFortune"] = {{Key = _R, Duration = 3,KeyName = "R", icon = "https://vignette.wikia.nocookie.net/leagueoflegends/images/b/bd/Bullet_Time.png"}},
+	["Shen"] = {{Key = _R, Duration = 3,KeyName = "R", icon = "https://vignette.wikia.nocookie.net/leagueoflegends/images/8/85/Stand_United_2.png"}},
+	["Warwick"] = {{Key = _R, Duration = 1.5,KeyName = "R", icon = "https://vignette.wikia.nocookie.net/leagueoflegends/images/f/f7/Infinite_Duress.png"}},
+	["VelKoz"] = {{Key = _R, Duration = 2.5, KeyName = "R", icon = "https://vignette.wikia.nocookie.net/leagueoflegends/images/6/64/Life_Form_Disintegration_Ray.png"}},
+	["Xerath"] = {{Key = _R, Duration = 10,KeyName = "R", icon = "https://vignette.wikia.nocookie.net/leagueoflegends/images/3/37/Rite_of_the_Arcane.png"}},
+}
+
+function InterruptableTarget(target)
+	if not InterruptableSkills[target.charName] then return false end
+	local result = false
+	for _, spell in pairs(InterruptableSkills[target.charName]) do
+		if target:GetSpellData(spell.Key).level > 0 and (target:GetSpellData(spell.Key).name == spell.SpellName or target:GetSpellData(spell.Key).currentCd > target:GetSpellData(spell.Key).cd - spell.Duration) then
+			result = true
+			break
+		end
+	end
+	return result
+end
+--- Interrupter ---
+
 --- Ashe ---
 class "Ashe"
 
@@ -235,13 +262,6 @@ function Ashe:LoadMenu()
     RomanovAshe:MenuElement({type = MENU, id = "Interrupter", name = "Interrupter"})
     RomanovAshe.Interrupter:MenuElement({id = "R", name = "R", value = true, leftIcon = R.icon})
     RomanovAshe.Interrupter:MenuElement({id = "Rrange", name = "Max distance to interrupt", value = 2000, min = 100, max = 25000, step = 100})
-    RomanovAshe.Interrupter:MenuElement({type = MENU, id = "Whitelist", name = "Whitelist"})
-    for i = 1, Game.HeroCount() do
-		local Hero = Game.Hero(i)
-		if Hero.isEnemy then
-			RomanovAshe.Interrupter.Whitelist:MenuElement({id = Hero.charName, name = Hero.charName, value = true, toggle = true})
-		end
-	end
 	--- Antigapclose ---
     RomanovAshe:MenuElement({type = MENU, id = "Antigapclose", name = "Antigapclose"})
     RomanovAshe.Antigapclose:MenuElement({id = "R", name = "R", value = true, leftIcon = R.icon})
@@ -279,7 +299,6 @@ function Ashe:Tick()
         self:Hawkshot()
     end
     if RomanovAshe.Interrupter.R:Value() and Ready(_R) then
-        self:UpdateInterrupterWhiteList()
         self:Interrupter()
     end
     if RomanovAshe.Antigapclose.R:Value() and Ready(_R) then
@@ -290,27 +309,24 @@ function Ashe:Tick()
         self:BaronDragon()
 end
 
-local _lastInterrupterWhiteListUpdate = Game.Timer()
-local _whiteListUpdateFrequency = 1
-local _interrupterWhiteList
-function Ashe:UpdateInterrupterWhiteList()	
-	if Game.Timer() - _lastInterrupterWhiteListUpdate < _whiteListUpdateFrequency then return end	
-	_lastInterrupterWhiteListUpdate = Game.Timer()
-	_interrupterWhiteList = {}
-	for i  = 1,Game.HeroCount(i) do
-		local enemy = Game.Hero(i)
-		if RomanovAshe.Interrupter.Whitelist[enemy.charName] and RomanovAshe.Interrupter.Whitelist[enemy.charName]:Value() then
-			_interrupterWhiteList[enemy.charName] = true
+function Ashe:InterruptableTarget(target)
+	if not InterruptableSkills[target.charName] then return false end
+	local result = false
+	for _, spell in pairs(InterruptableSkills[target.charName]) do
+		if target:GetSpellData(spell.Key).level > 0 and (target:GetSpellData(spell.Key).name == spell.SpellName or target:GetSpellData(spell.Key).currentCd > target:GetSpellData(spell.Key).cd - spell.Duration) then
+			result = true
+			break
 		end
 	end
+	return result
 end
 
 function Ashe:Interrupter()
 	for i  = 1,Game.HeroCount(i) do
         local enemy = Game.Hero(i)
-        if HPred:CanTarget(enemy) then
+        if HPred:CanTarget(enemy) and self:InterruptableTarget(enemy) then
             local hitChance, aimPosition = HPred:GetHitchance(myHero.pos, enemy, R.Range, R.Delay, R.Speed, R.Width, R.Collision, 2,_interrupterWhiteList)
-            if hitChance and hitChance >= 4 and HPred:GetDistance(myHero.pos, aimPosition) <= RomanovAshe.Interrupter.Rrange:Value() then
+            if hitChance and hitChance >= 2 and HPred:GetDistance(myHero.pos, aimPosition) <= RomanovAshe.Interrupter.Rrange:Value() then
                 Control.CastSpell(HK_R, aimPosition)
             end
         end
@@ -318,6 +334,7 @@ function Ashe:Interrupter()
 end
 
 local _lastAntigapcloseWhiteListUpdate = Game.Timer()
+local _whiteListUpdateFrequency = 1
 local _antigapcloseWhiteList
 function Ashe:UpdateAntigapcloseWhiteList()	
 	if Game.Timer() - _lastAntigapcloseWhiteListUpdate < _whiteListUpdateFrequency then return end	
@@ -401,8 +418,6 @@ function Ashe:Combo()
                 if hitChance and hitChance >= 3 and HPred:GetDistance(myHero.pos, aimPosition) <= RomanovAshe.Combo.Rrange:Value() then
                     if isOnScreen(target) then
                         Control.CastSpell(HK_R, aimPosition)
-                    else
-                        Control.CastSpell(HK_R, aimPosition:ToMM().x, aimPosition:ToMM().y)
                     end
                 end
             end
@@ -510,8 +525,6 @@ function Ashe:Flee()
             if hitChance and hitChance >= 3 and HPred:GetDistance(myHero.pos, aimPosition) <= RomanovAshe.Flee.Rrange:Value() then
                 if isOnScreen(target) then
                     Control.CastSpell(HK_R, aimPosition)
-                else
-                    Control.CastSpell(HK_R, aimPosition:ToMM().x, aimPosition:ToMM().y)
                 end
             end
         end
@@ -540,8 +553,6 @@ function Ashe:Killsteal()
             if hitChance and hitChance >= 3 and HPred:GetDistance(myHero.pos, aimPosition) <= RomanovAshe.Killsteal.Rrange:Value() then
                 if isOnScreen(target) then
                     Control.CastSpell(HK_R, aimPosition)
-                else
-                    Control.CastSpell(HK_R, aimPosition:ToMM().x, aimPosition:ToMM().y)
                 end
             end
         end
