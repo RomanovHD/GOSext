@@ -183,18 +183,6 @@ local InterruptableSkills = {
 	["VelKoz"] = {{Key = _R, Duration = 2.5, KeyName = "R", icon = "https://vignette.wikia.nocookie.net/leagueoflegends/images/6/64/Life_Form_Disintegration_Ray.png"}},
 	["Xerath"] = {{Key = _R, Duration = 10,KeyName = "R", icon = "https://vignette.wikia.nocookie.net/leagueoflegends/images/3/37/Rite_of_the_Arcane.png"}},
 }
-
-function InterruptableTarget(target)
-	if not InterruptableSkills[target.charName] then return false end
-	local result = false
-	for _, spell in pairs(InterruptableSkills[target.charName]) do
-		if target:GetSpellData(spell.Key).level > 0 and (target:GetSpellData(spell.Key).name == spell.SpellName or target:GetSpellData(spell.Key).currentCd > target:GetSpellData(spell.Key).cd - spell.Duration) then
-			result = true
-			break
-		end
-	end
-	return result
-end
 --- Interrupter ---
 
 --- Ashe ---
